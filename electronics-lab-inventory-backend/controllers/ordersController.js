@@ -1,32 +1,33 @@
 // controllers/ordersController.js
 
-const TransactionLog = require('../models/TransactionLog'); // Adjust if your model name is different
+const TransactionLog = require('../models/TransactionLog');
 const User = require('../models/User'); // For user info if needed
 
 // GET /api/orders/inward
 exports.getInwardOrders = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
-    const status = req.query.status && req.query.status !== 'all' ? req.query.status : undefined;
+    // Changed 'status' to 'transactionStatus' to match model field
+    const transactionStatus = req.query.status && req.query.status !== 'all' ? req.query.status : undefined;
 
-    const filter = { type: 'inward' };
-    if (status) filter.status = status;
+    const filter = { operationType: 'inward' }; // Correct operationType filter
+    if (transactionStatus) filter.transactionStatus = transactionStatus; // Apply filter to the new field
 
     const orders = await TransactionLog.find(filter)
       .sort({ createdAt: -1 })
       .limit(limit)
-      .populate('component', 'componentName') // If you store ref id; adjust as per schema
-      .populate('supplier', 'name') // If supplier is a ref
+      .populate('componentId', 'componentName') // Corrected populate field to componentId
+      .populate('user', 'name') // Assuming 'user' is the one who inwarded
       .lean();
 
     // Map output to required frontend shape
     const ordersData = orders.map(order => ({
       _id: order._id,
-      orderNumber: order.orderNumber || "",
-      componentName: order.componentName || (order.component && order.component.componentName) || "",
-      supplierName: order.supplierName || (order.supplier && order.supplier.name) || "",
+      orderNumber: order.supplierInvoice || "", // Using supplierInvoice as a placeholder for orderNumber
+      componentName: order.componentId?.componentName || "N/A", // Access componentName from populated field
+      supplierName: order.reasonOrProject || "N/A", // Using reasonOrProject as a placeholder for supplier
       quantity: order.quantity,
-      status: order.status,
+      transactionStatus: order.transactionStatus, // Use the new transactionStatus field
       createdAt: order.createdAt
     }));
 
@@ -44,25 +45,26 @@ exports.getInwardOrders = async (req, res) => {
 exports.getOutwardOrders = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
-    const status = req.query.status && req.query.status !== 'all' ? req.query.status : undefined;
+    // Changed 'status' to 'transactionStatus' to match model field
+    const transactionStatus = req.query.status && req.query.status !== 'all' ? req.query.status : undefined;
 
-    const filter = { type: 'outward' };
-    if (status) filter.status = status;
+    const filter = { operationType: 'outward' }; // Correct operationType filter
+    if (transactionStatus) filter.transactionStatus = transactionStatus; // Apply filter to the new field
 
     const orders = await TransactionLog.find(filter)
       .sort({ createdAt: -1 })
       .limit(limit)
-      .populate('component', 'componentName')
-      .populate('issuedTo', 'name') // issuedTo might be a user ref
+      .populate('componentId', 'componentName') // Corrected populate field to componentId
+      .populate('user', 'name') // Assuming 'user' is the one who outwarded/issued
       .lean();
 
     const ordersData = orders.map(order => ({
       _id: order._id,
-      orderNumber: order.orderNumber || "",
-      componentName: order.componentName || (order.component && order.component.componentName) || "",
-      issuedToName: order.issuedToName || (order.issuedTo && order.issuedTo.name) || "",
+      orderNumber: order.reasonOrProject || "", // Using reasonOrProject as a placeholder for orderNumber
+      componentName: order.componentId?.componentName || "N/A", // Access componentName from populated field
+      issuedToName: order.user?.name || "N/A", // Using user name as placeholder for issuedTo
       quantity: order.quantity,
-      status: order.status,
+      transactionStatus: order.transactionStatus, // Use the new transactionStatus field
       createdAt: order.createdAt
     }));
 
@@ -84,17 +86,17 @@ exports.getOrderActivity = async (req, res) => {
     const logs = await TransactionLog.find({})
       .sort({ createdAt: -1 })
       .limit(limit)
-      .populate('user', 'name role') // If you have a "user" ref field
-      .populate('component', 'componentName')
+      .populate('user', 'name role')
+      .populate('componentId', 'componentName') // Corrected populate field to componentId
       .lean();
 
     const activity = logs.map(log => ({
       _id: log._id,
-      userName: log.userName || (log.user && log.user.name) || "User",
-      type: log.type, // 'inward' or 'outward'
-      componentName: log.componentName || (log.component && log.component.componentName) || "",
+      userName: log.user?.name || "User",
+      type: log.operationType, // 'inward' or 'outward'
+      componentName: log.componentId?.componentName || "N/A",
       quantity: log.quantity,
-      issuedTo: log.issuedToName || (log.issuedTo && log.issuedTo.name) || "",
+      issuedTo: log.reasonOrProject || "", // Re-using reasonOrProject or notes
       timestamp: log.createdAt
     }));
 

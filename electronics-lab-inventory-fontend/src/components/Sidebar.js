@@ -36,11 +36,11 @@ const Sidebar = () => {
         {
             name: 'Orders',
             icon: <MdShoppingCart />,
-            path: '/orders',
+            path: '/sales-orders',
             color: '#fd7e14'
         },
         {
-            name: 'Suppliers',
+            name: 'Personal Assistant(to do)',
             icon: <MdPeople />,
             path: '/suppliers',
             color: '#9f7aea'
@@ -79,7 +79,7 @@ const Sidebar = () => {
                 {/* Sidebar Header */}
                 <div className="sidebar-header">
                     <div className="logo-container">
-                        <img src={wareviewLogo} alt="WareView Logo" className="logo" />
+                        {/* <img src={wareviewLogo} alt="WareView Logo" className="logo" /> */}
                         {!isCollapsed && <span className="logo-text">WareView</span>}
                     </div>
                     <button className="toggle-btn" onClick={toggleSidebar}>

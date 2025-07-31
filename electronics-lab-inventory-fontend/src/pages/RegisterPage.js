@@ -1,105 +1,1008 @@
 // src/pages/RegisterPage.js
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../utils/api'; // Your Axios instance
-import './RegisterPage.css'; // Create this CSS file
+import { 
+  MdPersonAdd, 
+  MdEmail, 
+  MdLock, 
+  MdVisibility, 
+  MdVisibilityOff,
+  MdCheckCircle,
+  MdError,
+  MdArrowForward,
+  MdScience
+} from 'react-icons/md';
+import api from '../utils/api';
 
 const RegisterPage = () => {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
-    const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(null);
-        setSuccess(null);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setIsLoading(true);
 
-        if (password !== confirmPassword) {
-            setError('Passwords do not match.');
-            return;
-        }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      setIsLoading(false);
+      return;
+    }
 
-        try {
-            const res = await api.post('/auth/register', {
-                name,
-                email,
-                password
-            });
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      setIsLoading(false);
+      return;
+    }
 
-            if (res.data.success) {
-                setSuccess('Registration successful! Please log in with your new account.');
-                // Optionally redirect to login page after a short delay
-                setTimeout(() => {
-                    navigate('/login');
-                }, 2000); // Redirect after 2 seconds
-            } else {
-                setError(res.data.message || 'Registration failed. Please try again.');
-            }
-        } catch (err) {
-            setError(err.response?.data?.message || 'An unexpected error occurred during registration.');
-            console.error('Registration error:', err);
-        }
-    };
+    try {
+      const res = await api.post('/auth/register', {
+        name,
+        email,
+        password
+      });
 
-    return (
-        <div className="register-page-container">
+      if (res.data.success) {
+        setSuccess('Registration successful! Redirecting to login...');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else {
+        setError(res.data.message || 'Registration failed. Please try again.');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'An unexpected error occurred during registration.');
+      console.error('Registration error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getPasswordStrength = (password) => {
+    if (!password) return { strength: 0, label: '', color: '' };
+    
+    let score = 0;
+    if (password.length >= 6) score++;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    if (score <= 2) return { strength: 25, label: 'Weak', color: '#ef4444' };
+    if (score <= 4) return { strength: 50, label: 'Fair', color: '#f59e0b' };
+    if (score <= 5) return { strength: 75, label: 'Good', color: '#3b82f6' };
+    return { strength: 100, label: 'Strong', color: '#10b981' };
+  };
+
+  const passwordStrength = getPasswordStrength(password);
+
+  return (
+    <div className="register-container">
+      <div className="register-background">
+        <div className="bg-pattern"></div>
+        <div className="bg-gradient"></div>
+      </div>
+      
+      <div className="register-wrapper">
+        <div className="register-content">
+          {/* Left side - Register Form */}
+          <div className="register-section">
             <div className="register-card">
-                <h2>Register for LIMS</h2>
-                {error && <p className="error-message">{error}</p>}
-                {success && <p className="success-message">{success}</p>}
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="name">Name:</label>
-                        <input
-                            type="text"
-                            id="name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                        />
+              {/* Header */}
+              <div className="register-header">
+                <div className="logo-section">
+                  <div className="logo-icon">
+                    <MdScience />
+                  </div>
+                  <div className="logo-text">
+                    <h1>LIMS</h1>
+                    <p>Laboratory Information Management System</p>
+                  </div>
+                </div>
+                <div className="register-title">
+                  <h2>Create Account</h2>
+                  <p>Join our laboratory management platform</p>
+                </div>
+              </div>
+
+              {/* Alert Messages */}
+              {error && (
+                <div className="alert alert-error">
+                  <MdError />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {success && (
+                <div className="alert alert-success">
+                  <MdCheckCircle />
+                  <span>{success}</span>
+                </div>
+              )}
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="register-form">
+                <div className="form-group">
+                  <label htmlFor="name">Full Name</label>
+                  <div className="input-wrapper">
+                    <MdPersonAdd className="input-icon" />
+                    <input
+                      type="text"
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Enter your full name"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="email">Email Address</label>
+                  <div className="input-wrapper">
+                    <MdEmail className="input-icon" />
+                    <input
+                      type="email"
+                      id="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email address"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="password">Password</label>
+                  <div className="input-wrapper">
+                    <MdLock className="input-icon" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Create a strong password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
+                    </button>
+                  </div>
+                  {password && (
+                    <div className="password-strength">
+                      <div className="strength-bar">
+                        <div 
+                          className="strength-fill" 
+                          style={{ width: `${passwordStrength.strength}%`, backgroundColor: passwordStrength.color }}
+                        ></div>
+                      </div>
+                      <span className="strength-label" style={{ color: passwordStrength.color }}>
+                        {passwordStrength.label}
+                      </span>
                     </div>
-                    <div className="form-group">
-                        <label htmlFor="email">Email:</label>
-                        <input
-                            type="email"
-                            id="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="password">Password:</label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="confirmPassword">Confirm Password:</label>
-                        <input
-                            type="password"
-                            id="confirmPassword"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <button type="submit" className="register-button">Register</button>
-                </form>
-                <p className="login-link-text">
-                    Already have an account? <Link to="/login">Login here</Link>
-                </p>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="confirmPassword">Confirm Password</label>
+                  <div className="input-wrapper">
+                    <MdLock className="input-icon" />
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      id="confirmPassword"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm your password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <MdVisibilityOff /> : <MdVisibility />}
+                    </button>
+                  </div>
+                  {confirmPassword && password !== confirmPassword && (
+                    <span className="field-error">Passwords do not match</span>
+                  )}
+                </div>
+
+                <button type="submit" className="register-button" disabled={isLoading}>
+                  {isLoading ? (
+                    <div className="loading-spinner"></div>
+                  ) : (
+                    <>
+                      <MdArrowForward />
+                      <span>Create Account</span>
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Footer */}
+              <div className="register-footer">
+                <p>Already have an account? <Link to="/login">Sign in here</Link></p>
+                <div className="terms-text">
+                  By creating an account, you agree to our Terms of Service and Privacy Policy
+                </div>
+              </div>
             </div>
+          </div>
+
+          {/* Right side - Information Panel */}
+          <div className="info-panel">
+            <div className="info-content">
+              <div className="welcome-icon">
+                <MdScience />
+              </div>
+              <h3>Welcome to LIMS</h3>
+              <p>Your comprehensive laboratory information management solution</p>
+              
+              <div className="features-list">
+                <div className="feature-item">
+                  <div className="feature-icon">📊</div>
+                  <div>
+                    <h4>Inventory Management</h4>
+                    <p>Track and manage laboratory inventory in real-time</p>
+                  </div>
+                </div>
+                <div className="feature-item">
+                  <div className="feature-icon">🔬</div>
+                  <div>
+                    <h4>Sample Tracking</h4>
+                    <p>Monitor samples throughout their lifecycle</p>
+                  </div>
+                </div>
+                <div className="feature-item">
+                  <div className="feature-icon">📈</div>
+                  <div>
+                    <h4>Analytics & Reports</h4>
+                    <p>Generate comprehensive reports and insights</p>
+                  </div>
+                </div>
+                <div className="feature-item">
+                  <div className="feature-icon">🔒</div>
+                  <div>
+                    <h4>Secure & Compliant</h4>
+                    <p>Enterprise-grade security and compliance</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="stats-grid">
+                <div className="stat-item">
+                  <div className="stat-number">500+</div>
+                  <div className="stat-label">Active Users</div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-number">10K+</div>
+                  <div className="stat-label">Samples Tracked</div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-number">99.9%</div>
+                  <div className="stat-label">Uptime</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-    );
+      </div>
+
+      <RegisterCSS />
+    </div>
+  );
 };
+
+// Fixed CSS with proper z-index and scrolling
+function RegisterCSS() {
+  return (
+    <style>{`
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html, body {
+        height: 100%;
+        overflow-x: hidden;
+      }
+
+      .register-container {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        margin: 0;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+
+      .register-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+
+      .bg-pattern {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                          radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+        opacity: 0.6;
+      }
+
+      .bg-gradient {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+      }
+
+      .register-wrapper {
+        position: relative;
+        padding: 4px;
+        border-radius: 28px;
+        background: linear-gradient(135deg, #8b5cf6, #a855f7, #6366f1, #8b5cf6);
+        background-size: 400% 400%;
+        animation: gradientShift 6s ease infinite;
+        box-shadow: 0 25px 50px -12px rgba(139, 92, 246, 0.3);
+        width: 100%;
+        max-width: 1200px;
+        height: calc(100vh - 40px);
+        max-height: 90vh;
+        min-height: 600px;
+        z-index: 10;
+      }
+
+      @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      .register-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+        height: 100%;
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        position: relative;
+        z-index: 20;
+      }
+
+      .register-section {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.02);
+        overflow-y: auto;
+        height: 100%;
+      }
+
+      .register-section::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .register-section::-webkit-scrollbar-track {
+        background: rgba(139, 92, 246, 0.1);
+        border-radius: 3px;
+      }
+
+      .register-section::-webkit-scrollbar-thumb {
+        background: rgba(139, 92, 246, 0.3);
+        border-radius: 3px;
+      }
+
+      .register-section::-webkit-scrollbar-thumb:hover {
+        background: rgba(139, 92, 246, 0.5);
+      }
+
+      .register-card {
+        background: white;
+        padding: 30px 25px;
+        width: 100%;
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: visible;
+        min-height: auto;
+        height: auto;
+        z-index: 30;
+        margin: auto 0;
+      }
+
+      .register-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .register-header {
+        margin-bottom: 25px;
+        position: relative;
+        z-index: 40;
+      }
+
+      .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 20px;
+        justify-content: center;
+      }
+
+      .logo-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #8b5cf6, #a855f7);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.6rem;
+        box-shadow: 0 6px 18px rgba(139, 92, 246, 0.3);
+      }
+
+      .logo-text {
+        text-align: center;
+      }
+
+      .logo-text h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+        line-height: 1;
+        background: linear-gradient(135deg, #8b5cf6, #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .logo-text p {
+        color: #6b7280;
+        font-size: 0.75rem;
+        margin: 4px 0 0 0;
+      }
+
+      .register-title {
+        text-align: center;
+      }
+
+      .register-title h2 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 6px 0;
+      }
+
+      .register-title p {
+        color: #6b7280;
+        font-size: 0.85rem;
+        margin: 0;
+      }
+
+      .alert {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: 500;
+        margin-bottom: 16px;
+        position: relative;
+        z-index: 40;
+        font-size: 0.85rem;
+      }
+
+      .alert-error {
+        background: linear-gradient(135deg, #fef2f2, #fee2e2);
+        color: #dc2626;
+        border: 1px solid #fecaca;
+      }
+
+      .alert-success {
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        color: #059669;
+        border: 1px solid #bbf7d0;
+      }
+
+      .register-form {
+        flex: 1;
+        position: relative;
+        z-index: 40;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 6px;
+        font-size: 0.8rem;
+      }
+
+      .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .input-icon {
+        position: absolute;
+        left: 12px;
+        color: #9ca3af;
+        font-size: 1rem;
+        z-index: 1;
+      }
+
+      .input-wrapper input {
+        width: 100%;
+        padding: 12px 12px 12px 38px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+        outline: none;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+      }
+
+      .input-wrapper input:focus {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        background: white;
+      }
+
+      .input-wrapper input::placeholder {
+        color: #9ca3af;
+        font-size: 0.85rem;
+      }
+
+      .password-toggle {
+        position: absolute;
+        right: 12px;
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+        transition: all 0.2s;
+        border-radius: 4px;
+      }
+
+      .password-toggle:hover {
+        color: #6b7280;
+        background: rgba(139, 92, 246, 0.1);
+      }
+
+      .password-strength {
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .strength-bar {
+        flex: 1;
+        height: 3px;
+        background: #e5e7eb;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .strength-fill {
+        height: 100%;
+        transition: all 0.3s;
+        border-radius: 2px;
+      }
+
+      .strength-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
+      .field-error {
+        color: #dc2626;
+        font-size: 0.75rem;
+        margin-top: 4px;
+        display: block;
+      }
+
+      .register-button {
+        width: 100%;
+        background: linear-gradient(135deg, #8b5cf6, #a855f7);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        position: relative;
+        overflow: hidden;
+        margin: 18px 0 16px 0;
+      }
+
+      .register-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+      }
+
+      .register-button:hover:not(:disabled)::before {
+        left: 100%;
+      }
+
+      .register-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+      }
+
+      .register-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      .register-footer {
+        text-align: center;
+        position: relative;
+        z-index: 40;
+      }
+
+      .register-footer p {
+        color: #6b7280;
+        margin: 0 0 10px 0;
+        font-size: 0.8rem;
+      }
+
+      .register-footer a {
+        color: #8b5cf6;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s;
+        padding: 4px 6px;
+        border-radius: 4px;
+      }
+
+      .register-footer a:hover {
+        color: #7c3aed;
+        background: rgba(139, 92, 246, 0.1);
+      }
+
+      .terms-text {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        line-height: 1.3;
+      }
+
+      /* Information Panel */
+      .info-panel {
+        background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+        color: white;
+        padding: 25px;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow-y: auto;
+        height: 100%;
+        z-index: 20;
+      }
+
+      .info-panel::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .info-panel::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+      }
+
+      .info-panel::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+      }
+
+      .info-panel::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .info-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 40%),
+                          radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 40%);
+        opacity: 0.6;
+        z-index: -1;
+      }
+
+      .info-content {
+        position: relative;
+        z-index: 30;
+        width: 100%;
+        margin: auto 0;
+      }
+
+      .welcome-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 0 18px 0;
+        backdrop-filter: blur(10px);
+      }
+
+      .info-content h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0 0 12px 0;
+        line-height: 1.2;
+      }
+
+      .info-content > p {
+        font-size: 0.95rem;
+        opacity: 0.9;
+        margin: 0 0 24px 0;
+        line-height: 1.4;
+      }
+
+      .features-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .feature-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .feature-icon {
+        font-size: 1.4rem;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 6px;
+        border-radius: 6px;
+        backdrop-filter: blur(10px);
+        flex-shrink: 0;
+      }
+
+      .feature-item h4 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin: 0 0 3px 0;
+      }
+
+      .feature-item p {
+        font-size: 0.8rem;
+        opacity: 0.85;
+        margin: 0;
+        line-height: 1.3;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .stat-number {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 3px;
+        display: block;
+      }
+
+      .stat-label {
+        font-size: 0.7rem;
+        opacity: 0.8;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1024px) {
+        .register-content {
+          grid-template-columns: 1fr;
+        }
+
+        .info-panel {
+          display: none;
+        }
+
+        .register-section {
+          padding: 20px 15px;
+        }
+
+        .register-wrapper {
+          max-width: 500px;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .register-container {
+          padding: 10px;
+        }
+
+        .register-wrapper {
+          height: calc(100vh - 20px);
+          min-height: 500px;
+        }
+
+        .register-card {
+          padding: 20px 15px;
+        }
+
+        .register-section {
+          padding: 10px;
+        }
+
+        .register-title h2 {
+          font-size: 1.2rem;
+        }
+
+        .logo-icon {
+          width: 40px;
+          height: 40px;
+          font-size: 1.4rem;
+        }
+
+        .logo-text h1 {
+          font-size: 1.3rem;
+        }
+
+        .form-group {
+          margin-bottom: 14px;
+        }
+      }
+
+      @media (max-height: 700px) {
+        .register-wrapper {
+          height: calc(100vh - 20px);
+          min-height: 480px;
+        }
+
+        .register-card {
+          padding: 15px;
+        }
+
+        .register-header {
+          margin-bottom: 16px;
+        }
+
+        .logo-section {
+          margin-bottom: 12px;
+        }
+
+        .form-group {
+          margin-bottom: 12px;
+        }
+      }
+
+      @media (max-height: 600px) {
+        .register-wrapper {
+          height: calc(100vh - 10px);
+          min-height: 450px;
+        }
+
+        .register-section {
+          align-items: flex-start;
+          padding: 10px;
+        }
+
+        .register-card {
+          padding: 12px;
+          margin: 0;
+        }
+
+        .register-header {
+          margin-bottom: 12px;
+        }
+
+        .logo-section {
+          margin-bottom: 8px;
+        }
+
+        .form-group {
+          margin-bottom: 10px;
+        }
+
+        .register-button {
+          margin: 12px 0 8px 0;
+        }
+      }
+    `}</style>
+  );
+}
 
 export default RegisterPage;

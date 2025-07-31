@@ -3,13 +3,16 @@ import AuthContext from '../contexts/AuthContext';
 import { 
   MdStorage, MdBarChart, MdTrendingUp, MdNotifications, MdWarning, MdArchive,
   MdAttachMoney, MdInput, MdSettingsApplications, MdHistory, MdLightbulbOutline,
-  MdErrorOutline, MdPriorityHigh, MdArrowForward,
-  MdPeople, MdRefresh, MdGetApp, MdBalance, MdAdd  // Add these new imports
+  MdErrorOutline, MdPriorityHigh, MdArrowForward, MdPeople, MdRefresh, MdGetApp, 
+  MdBalance, MdAdd, MdViewList, MdCode, MdCategory, MdInfo, MdInventory, MdTimeline,
+  MdSwapHoriz, MdArrowDownward, MdArrowUpward, MdAccessTime, MdSchedule, MdLock, MdSecurity
 } from 'react-icons/md';
+import { useNavigate } from "react-router-dom";
 
 
 import {
-  LineChart, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, Line, ResponsiveContainer
+  LineChart, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, Line, ResponsiveContainer,AreaChart,
+  Area,
 } from 'recharts';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
@@ -69,6 +72,8 @@ const HomePage = () => {
     fetchDashboardData();
   }, []);
 
+  const navigate = useNavigate();
+  // Format currency for IN
   const formatCurrency = (value) =>
     `INR ${parseFloat(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -257,129 +262,7 @@ ${JSON.stringify(smartInput, null, 2)}
             <DashboardCard title="Total Inventory Value" value={formatCurrency(overviewData?.totalInventoryValue)} icon={<MdAttachMoney />} color="purple" />
             <DashboardCard title="Today's Inward" value={overviewData?.totalInward || 0} icon={<MdInput />} color="teal" />
 
-            {/* Enhanced Notifications Section */}
-            <div className="dashboard-section notification-summary-card">
-              <div className="notification-header">
-                <h2 className="section-title">
-                  <div className="title-icon-container">
-                    <MdNotifications className="notification-title-icon" />
-                  </div>
-                  Notifications
-                </h2>
-                <div className="notification-actions">
-                  <button className="view-all-btn">View All</button>
-                  <button className="mark-read-btn">Mark All Read</button>
-                </div>
-              </div>
-
-              {/* Notification Stats Grid */}
-              <div className="notification-stats-grid">
-                <div className="stat-card total">
-                  <div className="stat-icon">
-                    <MdNotifications />
-                  </div>
-                  <div className="stat-content">
-                    <span className="stat-number">{notificationSummary?.total || 0}</span>
-                    <span className="stat-label">Total</span>
-                  </div>
-                </div>
-                
-                <div className="stat-card unread">
-                  <div className="stat-icon">
-                    <div className="unread-dot"></div>
-                  </div>
-                  <div className="stat-content">
-                    <span className="stat-number">{notificationSummary?.unread || 0}</span>
-                    <span className="stat-label">Unread</span>
-                  </div>
-                </div>
-                
-                <div className="stat-card action-required">
-                  <div className="stat-icon">
-                    <MdWarning />
-                  </div>
-                  <div className="stat-content">
-                    <span className="stat-number">{notificationSummary?.actionRequired || 0}</span>
-                    <span className="stat-label">Action Required</span>
-                  </div>
-                </div>
-                
-                <div className="stat-card critical">
-                  <div className="stat-icon">
-                    <MdErrorOutline />
-                  </div>
-                  <div className="stat-content">
-                    <span className="stat-number">{notificationSummary?.critical || 0}</span>
-                    <span className="stat-label">Critical</span>
-                  </div>
-                </div>
-                
-                <div className="stat-card high-priority">
-                  <div className="stat-icon">
-                    <MdErrorOutline />
-                  </div>
-                  <div className="stat-content">
-                    <span className="stat-number">{notificationSummary?.high || 0}</span>
-                    <span className="stat-label">High Priority</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Critical Notifications */}
-              {notificationSummary?.criticalNotifications?.length > 0 && (
-                <div className="critical-notifications-section">
-                  <div className="critical-header">
-                    <MdErrorOutline className="critical-icon" />
-                    <h3>Recent Critical Notifications</h3>
-                    <span className="critical-count">{notificationSummary.criticalNotifications.length}</span>
-                  </div>
-                  <div className="critical-notifications-list">
-                    {notificationSummary.criticalNotifications.slice(0, 3).map((notif, index) => (
-                      <div key={notif._id} className="critical-notification-item">
-                        <div className="critical-item-indicator"></div>
-                        <div className="critical-item-content">
-                          <div className="critical-item-header">
-                            <span className="critical-item-title">{notif.title}</span>
-                            <span className="critical-item-time">
-                              {notif.createdAt ? new Date(notif.createdAt).toLocaleDateString() : 'Recent'}
-                            </span>
-                          </div>
-                          <div className="critical-item-message">{notif.message}</div>
-                          {notif.relatedComponent && (
-                            <div className="critical-item-component">
-                              <span>Component: {notif.relatedComponent.partNumber}</span>
-                            </div>
-                          )}
-                        </div>
-                        <button className="critical-item-action">
-                          <MdArrowForward />
-                        </button>
-                      </div>
-                    ))}
-                    {notificationSummary.criticalNotifications.length > 3 && (
-                      <div className="view-more-critical">
-                        <button className="view-more-btn">
-                          View {notificationSummary.criticalNotifications.length - 3} more critical notifications
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* No Notifications State */}
-              {(!notificationSummary || notificationSummary.total === 0) && (
-                <div className="no-notifications">
-                  <div className="no-notifications-icon">
-                    <MdNotifications />
-                  </div>
-                  <div className="no-notifications-text">
-                    <h4>All caught up!</h4>
-                    <p>No new notifications at the moment.</p>
-                  </div>
-                </div>
-              )}
-            </div>
+            
 
 {/* Move the CSS outside the component - Add this after your dashboard-grid closing tag */}
 <style jsx>{`
@@ -816,135 +699,913 @@ ${JSON.stringify(smartInput, null, 2)}
 
 
 
-{/* Enhanced Chart: Monthly Transactions */}
-<div className="dashboard-section monthly-stats-enhanced">
-  <div className="chart-header">
-    <div className="chart-title-section">
-      <div className="chart-icon-container">
-        <MdBarChart className="chart-title-icon" />
+
+          </div>
+          
+            {/* Enhanced Notifications Section */}
+            <div className="dashboard-section notification-summary-card">
+              <div className="notification-header">
+                <h2 className="section-title">
+                  <div className="title-icon-container">
+                    <MdNotifications className="notification-title-icon" />
+                  </div>
+                  Notifications
+                </h2>
+                <div className="notification-actions">
+                  <button className="view-all-btn">View All</button>
+                  <button className="mark-read-btn">Mark All Read</button>
+                </div>
+              </div>
+
+              {/* Notification Stats Grid */}
+              <div className="notification-stats-grid">
+                <div className="stat-card total">
+                  <div className="stat-icon">
+                    <MdNotifications />
+                  </div>
+                  <div className="stat-content">
+                    <span className="stat-number">{notificationSummary?.total || 0}</span>
+                    <span className="stat-label">Total</span>
+                  </div>
+                </div>
+                
+                <div className="stat-card unread">
+                  <div className="stat-icon">
+                    <div className="unread-dot"></div>
+                  </div>
+                  <div className="stat-content">
+                    <span className="stat-number">{notificationSummary?.unread || 0}</span>
+                    <span className="stat-label">Unread</span>
+                  </div>
+                </div>
+                
+                <div className="stat-card action-required">
+                  <div className="stat-icon">
+                    <MdWarning />
+                  </div>
+                  <div className="stat-content">
+                    <span className="stat-number">{notificationSummary?.actionRequired || 0}</span>
+                    <span className="stat-label">Action Required</span>
+                  </div>
+                </div>
+                
+                <div className="stat-card critical">
+                  <div className="stat-icon">
+                    <MdErrorOutline />
+                  </div>
+                  <div className="stat-content">
+                    <span className="stat-number">{notificationSummary?.critical || 0}</span>
+                    <span className="stat-label">Critical</span>
+                  </div>
+                </div>
+                
+                <div className="stat-card high-priority">
+                  <div className="stat-icon">
+                    <MdErrorOutline />
+                  </div>
+                  <div className="stat-content">
+                    <span className="stat-number">{notificationSummary?.high || 0}</span>
+                    <span className="stat-label">High Priority</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Critical Notifications */}
+              {notificationSummary?.criticalNotifications?.length > 0 && (
+                <div className="critical-notifications-section">
+                  <div className="critical-header">
+                    <MdErrorOutline className="critical-icon" />
+                    <h3>Recent Critical Notifications</h3>
+                    <span className="critical-count">{notificationSummary.criticalNotifications.length}</span>
+                  </div>
+                  <div className="critical-notifications-list">
+                    {notificationSummary.criticalNotifications.slice(0, 3).map((notif, index) => (
+                      <div key={notif._id} className="critical-notification-item">
+                        <div className="critical-item-indicator"></div>
+                        <div className="critical-item-content">
+                          <div className="critical-item-header">
+                            <span className="critical-item-title">{notif.title}</span>
+                            <span className="critical-item-time">
+                              {notif.createdAt ? new Date(notif.createdAt).toLocaleDateString() : 'Recent'}
+                            </span>
+                          </div>
+                          <div className="critical-item-message">{notif.message}</div>
+                          {notif.relatedComponent && (
+                            <div className="critical-item-component">
+                              <span>Component: {notif.relatedComponent.partNumber}</span>
+                            </div>
+                          )}
+                        </div>
+                        <button className="critical-item-action">
+                          <MdArrowForward />
+                        </button>
+                      </div>
+                    ))}
+                    {notificationSummary.criticalNotifications.length > 3 && (
+                      <div className="view-more-critical">
+                        <button className="view-more-btn">
+                          View {notificationSummary.criticalNotifications.length - 3} more critical notifications
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* No Notifications State */}
+              {(!notificationSummary || notificationSummary.total === 0) && (
+                <div className="no-notifications">
+                  <div className="no-notifications-icon">
+                    <MdNotifications />
+                  </div>
+                  <div className="no-notifications-text">
+                    <h4>All caught up!</h4>
+                    <p>No new notifications at the moment.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Enhanced Chart: Monthly Transactions */}
+            <div className="dashboard-section monthly-stats-enhanced">
+              <div className="chart-header">
+                <div className="chart-title-section">
+                  <div className="chart-icon-container">
+                    <MdBarChart className="chart-title-icon" />
+                  </div>
+                  <div className="chart-title-content">
+                    <h2 className="chart-title">Monthly Transaction Overview</h2>
+                    <p className="chart-subtitle">Last 6 months performance</p>
+                  </div>
+                </div>
+                <div className="chart-actions">
+                  <div className="chart-legend-compact">
+                    <div className="legend-item">
+                      <div className="legend-dot inward"></div>
+                      <span>Inward</span>
+                    </div>
+                    <div className="legend-item">
+                      <div className="legend-dot outward"></div>
+                      <span>Outward</span>
+                    </div>
+                  </div>
+                  <button className="chart-export-btn">
+                    <MdGetApp />
+                  </button>
+                </div>
+              </div>
+
+              <div className="chart-content">
+                {monthlyStats.length > 0 ? (
+                  <>
+                    {/* Quick Stats Summary */}
+                    <div className="chart-summary">
+                      <div className="summary-stat">
+                        <span className="summary-number">
+                          {monthlyStats.reduce((sum, month) => sum + (month.inwardQuantity || 0), 0).toLocaleString()}
+                        </span>
+                        <span className="summary-label">Total Inward</span>
+                      </div>
+                      <div className="summary-stat">
+                        <span className="summary-number">
+                          {monthlyStats.reduce((sum, month) => sum + (month.outwardQuantity || 0), 0).toLocaleString()}
+                        </span>
+                        <span className="summary-label">Total Outward</span>
+                      </div>
+                      <div className="summary-stat">
+                        <span className="summary-number">
+                          {Math.round(monthlyStats.reduce((sum, month) => sum + (month.inwardQuantity || 0), 0) / monthlyStats.length).toLocaleString()}
+                        </span>
+                        <span className="summary-label">Avg Monthly</span>
+                      </div>
+                    </div>
+
+                    {/* Enhanced Chart Container */}
+                    <div className="chart-container">
+                      <ResponsiveContainer width="100%" height={320}>
+                        <BarChart 
+                          data={monthlyStats} 
+                          margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                          barGap={8}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                          <XAxis 
+                            dataKey="monthName" 
+                            tick={{ fill: '#64748b', fontSize: 12 }}
+                            axisLine={{ stroke: '#e2e8f0' }}
+                          />
+                          <YAxis 
+                            tick={{ fill: '#64748b', fontSize: 12 }}
+                            axisLine={{ stroke: '#e2e8f0' }}
+                          />
+                          <Tooltip 
+                            formatter={(value, name) => [
+                              `${value.toLocaleString()} units`, 
+                              name === 'inwardQuantity' ? 'Inward' : 'Outward'
+                            ]}
+                            labelStyle={{ color: '#374151', fontWeight: '600' }}
+                            contentStyle={{
+                              backgroundColor: 'white',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                            }}
+                          />
+                          <Legend 
+                            wrapperStyle={{ paddingTop: '20px' }}
+                            iconType="rect"
+                          />
+                          <Bar 
+                            dataKey="inwardQuantity" 
+                            name="Inward" 
+                            fill="#667eea"
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <Bar 
+                            dataKey="outwardQuantity" 
+                            name="Outward" 
+                            fill="#3dc47e"
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Chart Insights */}
+                    <div className="chart-insights">
+                      <div className="insight-item">
+                        <div className="insight-icon trend-up">
+                          <MdTrendingUp />
+                        </div>
+                        <div className="insight-content">
+                          <span className="insight-title">Peak Month</span>
+                          <span className="insight-value">
+                            {monthlyStats.reduce((prev, current) => 
+                              (prev.inwardQuantity + prev.outwardQuantity) > (current.inwardQuantity + current.outwardQuantity) ? prev : current
+                            ).monthName}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="insight-item">
+                        <div className="insight-icon balance">
+                          <MdBalance />
+                        </div>
+                        <div className="insight-content">
+                          <span className="insight-title">Net Flow</span>
+                          <span className="insight-value">
+                            {(monthlyStats.reduce((sum, month) => sum + (month.inwardQuantity || 0), 0) - 
+                              monthlyStats.reduce((sum, month) => sum + (month.outwardQuantity || 0), 0)).toLocaleString()} units
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="no-data-state">
+                    <div className="no-data-icon">
+                      <MdBarChart />
+                    </div>
+                    <div className="no-data-content">
+                      <h4>No Transaction Data</h4>
+                      <p>Monthly transaction data will appear here once transactions are recorded.</p>
+                      <button className="add-data-btn">
+                        <MdAdd /> Add Transaction
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Enhanced Inline CSS */}
+              <style jsx>{`
+                .monthly-stats-enhanced {
+                  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+                  border: 1px solid #e2e8f0;
+                  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+                  border-radius: 16px;
+                  padding: 24px;
+                  transition: all 0.3s ease;
+                  position: relative;
+                  overflow: hidden;
+                }
+
+                .monthly-stats-enhanced:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                }
+
+                .monthly-stats-enhanced::before {
+                  content: '';
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  height: 4px;
+                  background: linear-gradient(90deg, #667eea 0%, #3dc47e 100%);
+                }
+
+                .chart-header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-start;
+                  margin-bottom: 20px;
+                  padding-bottom: 16px;
+                  border-bottom: 1px solid #f1f5f9;
+                }
+
+                .chart-title-section {
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                }
+
+                .chart-icon-container {
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  width: 48px;
+                  height: 48px;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  border-radius: 12px;
+                  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                }
+
+                .chart-title-icon {
+                  color: white;
+                  font-size: 1.4rem;
+                }
+
+                .chart-title-content {
+                  display: flex;
+                  flex-direction: column;
+                }
+
+                .chart-title {
+                  font-size: 1.3rem;
+                  font-weight: 700;
+                  color: #1f2937;
+                  margin: 0 0 4px 0;
+                  letter-spacing: -0.02em;
+                }
+
+                .chart-subtitle {
+                  font-size: 0.9rem;
+                  color: #6b7280;
+                  margin: 0;
+                  font-weight: 500;
+                }
+
+                .chart-actions {
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                }
+
+                .chart-legend-compact {
+                  display: flex;
+                  gap: 16px;
+                }
+
+                .legend-item {
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  font-size: 0.85rem;
+                  color: #64748b;
+                  font-weight: 500;
+                }
+
+                .legend-dot {
+                  width: 12px;
+                  height: 12px;
+                  border-radius: 3px;
+                }
+
+                .legend-dot.inward {
+                  background: #667eea;
+                }
+
+                .legend-dot.outward {
+                  background: #3dc47e;
+                }
+
+                .chart-export-btn {
+                  width: 36px;
+                  height: 36px;
+                  background: #f8fafc;
+                  border: 1px solid #e2e8f0;
+                  border-radius: 8px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  cursor: pointer;
+                  color: #64748b;
+                  transition: all 0.2s ease;
+                  font-size: 1.1rem;
+                }
+
+                .chart-export-btn:hover {
+                  background: #e2e8f0;
+                  color: #667eea;
+                }
+
+                .chart-content {
+                  position: relative;
+                }
+
+                .chart-summary {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                  gap: 16px;
+                  margin-bottom: 24px;
+                  padding: 16px;
+                  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                  border-radius: 12px;
+                  border: 1px solid #e2e8f0;
+                }
+
+                .summary-stat {
+                  text-align: center;
+                  padding: 8px;
+                }
+
+                .summary-number {
+                  display: block;
+                  font-size: 1.4rem;
+                  font-weight: 700;
+                  color: #1f2937;
+                  margin-bottom: 4px;
+                }
+
+                .summary-label {
+                  font-size: 0.8rem;
+                  color: #6b7280;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  font-weight: 600;
+                }
+
+                .chart-container {
+                  background: white;
+                  border-radius: 12px;
+                  padding: 16px;
+                  border: 1px solid #f1f5f9;
+                  margin-bottom: 20px;
+                }
+
+                .chart-insights {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                  gap: 12px;
+                }
+
+                .insight-item {
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                  padding: 12px 16px;
+                  background: white;
+                  border: 1px solid #e2e8f0;
+                  border-radius: 10px;
+                  transition: all 0.2s ease;
+                }
+
+                .insight-item:hover {
+                  border-color: #cbd5e1;
+                  transform: translateY(-1px);
+                }
+
+                .insight-icon {
+                  width: 36px;
+                  height: 36px;
+                  border-radius: 8px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 1.1rem;
+                }
+
+                .insight-icon.trend-up {
+                  background: #10b98115;
+                  color: #10b981;
+                }
+
+                .insight-icon.balance {
+                  background: #667eea15;
+                  color: #667eea;
+                }
+
+                .insight-content {
+                  display: flex;
+                  flex-direction: column;
+                }
+
+                .insight-title {
+                  font-size: 0.8rem;
+                  color: #6b7280;
+                  font-weight: 500;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                }
+
+                .insight-value {
+                  font-size: 1rem;
+                  color: #1f2937;
+                  font-weight: 600;
+                  margin-top: 2px;
+                }
+
+                .no-data-state {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  padding: 60px 20px;
+                  text-align: center;
+                }
+
+                .no-data-icon {
+                  width: 80px;
+                  height: 80px;
+                  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  margin-bottom: 20px;
+                  font-size: 2.2rem;
+                  color: #9ca3af;
+                }
+
+                .no-data-content h4 {
+                  color: #374151;
+                  font-size: 1.2rem;
+                  font-weight: 600;
+                  margin: 0 0 8px 0;
+                }
+
+                .no-data-content p {
+                  color: #6b7280;
+                  font-size: 1rem;
+                  margin: 0 0 20px 0;
+                  max-width: 300px;
+                }
+
+                .add-data-btn {
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  padding: 10px 20px;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  color: white;
+                  border: none;
+                  border-radius: 8px;
+                  font-weight: 600;
+                  cursor: pointer;
+                  transition: all 0.2s ease;
+                  font-size: 0.9rem;
+                }
+
+                .add-data-btn:hover {
+                  transform: translateY(-1px);
+                  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                }
+
+                /* Responsive Design */
+                @media (max-width: 768px) {
+                  .chart-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 16px;
+                  }
+
+                  .chart-actions {
+                    align-self: stretch;
+                    justify-content: space-between;
+                  }
+
+                  .chart-summary {
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 12px;
+                    padding: 12px;
+                  }
+
+                  .summary-number {
+                    font-size: 1.2rem;
+                  }
+
+                  .chart-insights {
+                    grid-template-columns: 1fr;
+                  }
+
+                  .chart-title-section {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 8px;
+                  }
+
+                  .chart-icon-container {
+                    width: 40px;
+                    height: 40px;
+                  }
+
+                  .chart-title-icon {
+                    font-size: 1.2rem;
+                  }
+                }
+
+                @media (max-width: 480px) {
+                  .monthly-stats-enhanced {
+                    padding: 16px;
+                  }
+
+                  .chart-summary {
+                    grid-template-columns: 1fr;
+                    text-align: center;
+                  }
+
+                  .legend-item {
+                    font-size: 0.8rem;
+                  }
+
+                  .chart-container {
+                    padding: 12px;
+                  }
+                }
+
+                /* Loading animation for chart */
+                @keyframes chartLoad {
+                  0% { opacity: 0; transform: translateY(20px); }
+                  100% { opacity: 1; transform: translateY(0); }
+                }
+
+                .chart-container {
+                  animation: chartLoad 0.5s ease-out;
+                }
+              `}</style>
+            </div>
+
+            {/* Chart: Daily Usage Trends */}
+            <div className="dashboard-section daily-trends-enhanced">
+      <div className="section-header">
+        <div className="section-title">
+          <MdTrendingUp style={{ marginRight: 8 }} />
+          Daily Usage Trends (Last 7 Days)
+        </div>
       </div>
-      <div className="chart-title-content">
-        <h2 className="chart-title">Monthly Transaction Overview</h2>
-        <p className="chart-subtitle">Last 6 months performance</p>
+      <div className="section-content">
+        {dailyTrends.length > 0 ? (
+          <ResponsiveContainer width="100%" height={320}>
+            <AreaChart
+              data={dailyTrends}
+              margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="colorInward" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#667eea" stopOpacity={0.55} />
+                  <stop offset="95%" stopColor="#667eea" stopOpacity={0.03} />
+                </linearGradient>
+                <linearGradient id="colorOutward" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3dc47e" stopOpacity={0.5} />
+                  <stop offset="95%" stopColor="#3dc47e" stopOpacity={0.04} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis dataKey="_id" tick={{ fill: "#64748b", fontSize: 12 }} />
+              <YAxis tick={{ fill: "#64748b", fontSize: 12 }} />
+              <Tooltip
+                formatter={(value, name) => [
+                  `${value.toLocaleString()} units`,
+                  name === "inwardQuantity" ? "Inward" : "Outward",
+                ]}
+                labelStyle={{ color: "#374151", fontWeight: 600 }}
+                contentStyle={{
+                  backgroundColor: "#fff",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "10px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,.06)",
+                  fontWeight: 500,
+                }}
+              />
+              <Legend iconType="rect" />
+              <Area
+                type="monotone"
+                dataKey="inwardQuantity"
+                name="Inward"
+                stroke="#667eea"
+                fill="url(#colorInward)"
+                strokeWidth={2}
+                dot={{ r: 4, fill: "#667eea", stroke: "#fff", strokeWidth: 2 }}
+                activeDot={{ r: 6 }}
+              />
+              <Area
+                type="monotone"
+                dataKey="outwardQuantity"
+                name="Outward"
+                stroke="#3dc47e"
+                fill="url(#colorOutward)"
+                strokeWidth={2}
+                dot={{ r: 4, fill: "#3dc47e", stroke: "#fff", strokeWidth: 2 }}
+                activeDot={{ r: 6 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="no-data-trends">
+            <p className="no-data-message">No daily usage trend data available.</p>
+          </div>
+        )}
+      </div>
+      {/* Inline CSS */}
+      <style>{`
+        .daily-trends-enhanced {
+          background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+          border-radius: 16px;
+          padding: 0;
+          overflow: hidden;
+          position: relative;
+          transition: box-shadow 0.3s;
+        }
+        .daily-trends-enhanced:hover {
+          box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        }
+        .section-header {
+          padding: 24px 24px 20px 24px;
+          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+          border-bottom: 1px solid #e2e8f0;
+        }
+        .section-title {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #1f2937;
+          display: flex;
+          align-items: center;
+          letter-spacing: -0.01em;
+        }
+        .section-content {
+          padding: 24px 24px 20px 24px;
+        }
+        .no-data-trends {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 55px 0;
+        }
+        .no-data-message {
+          color: #888;
+          font-size: 1rem;
+          background: #f8fafc;
+          border: 1px dashed #e2e8f0;
+          border-radius: 8px;
+          padding: 28px 16px;
+        }
+        @media (max-width: 900px) {
+          .section-content, .section-header { padding: 16px; }
+        }
+        @media (max-width: 600px) {
+          .section-content, .section-header { padding: 9px; }
+        }
+      `}</style>
+            </div>
+
+            {/*Top 5: Components*/}
+            <div className="dashboard-section top-components-enhanced">
+  <div className="top-components-header">
+    <div className="header-content">
+      <div className="title-icon-wrapper">
+        <MdStorage className="section-icon" />
+      </div>
+      <div className="title-content">
+        <h2 className="section-title">Top 5 Components by Usage</h2>
+        <p className="section-subtitle">Most frequently used components this month</p>
       </div>
     </div>
-    <div className="chart-actions">
-      <div className="chart-legend-compact">
-        <div className="legend-item">
-          <div className="legend-dot inward"></div>
-          <span>Inward</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-dot outward"></div>
-          <span>Outward</span>
-        </div>
-      </div>
-      <button className="chart-export-btn">
+    <div className="header-actions">
+      
+
+      <button
+        className="view-all-btn"
+        onClick={() => navigate("/inventory")}
+      >
+        <MdViewList />
+        <span>View All</span>
+      </button>
+
+      <button className="export-btn">
         <MdGetApp />
       </button>
     </div>
   </div>
 
-  <div className="chart-content">
-    {monthlyStats.length > 0 ? (
+  <div className="components-content">
+    {topComponents.length > 0 ? (
       <>
-        {/* Quick Stats Summary */}
-        <div className="chart-summary">
-          <div className="summary-stat">
+        {/* Quick Stats */}
+        <div className="usage-summary">
+          <div className="summary-item">
             <span className="summary-number">
-              {monthlyStats.reduce((sum, month) => sum + (month.inwardQuantity || 0), 0).toLocaleString()}
+              {topComponents.reduce((sum, comp) => sum + comp.totalQuantity, 0).toLocaleString()}
             </span>
-            <span className="summary-label">Total Inward</span>
+            <span className="summary-label">Total Usage</span>
           </div>
-          <div className="summary-stat">
-            <span className="summary-number">
-              {monthlyStats.reduce((sum, month) => sum + (month.outwardQuantity || 0), 0).toLocaleString()}
-            </span>
-            <span className="summary-label">Total Outward</span>
+          <div className="summary-item">
+            <span className="summary-number">{topComponents.length}</span>
+            <span className="summary-label">Top Components</span>
           </div>
-          <div className="summary-stat">
+          <div className="summary-item">
             <span className="summary-number">
-              {Math.round(monthlyStats.reduce((sum, month) => sum + (month.inwardQuantity || 0), 0) / monthlyStats.length).toLocaleString()}
+              {Math.round(topComponents.reduce((sum, comp) => sum + comp.totalQuantity, 0) / topComponents.length)}
             </span>
-            <span className="summary-label">Avg Monthly</span>
+            <span className="summary-label">Avg Usage</span>
           </div>
         </div>
 
-        {/* Enhanced Chart Container */}
-        <div className="chart-container">
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart 
-              data={monthlyStats} 
-              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-              barGap={8}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis 
-                dataKey="monthName" 
-                tick={{ fill: '#64748b', fontSize: 12 }}
-                axisLine={{ stroke: '#e2e8f0' }}
-              />
-              <YAxis 
-                tick={{ fill: '#64748b', fontSize: 12 }}
-                axisLine={{ stroke: '#e2e8f0' }}
-              />
-              <Tooltip 
-                formatter={(value, name) => [
-                  `${value.toLocaleString()} units`, 
-                  name === 'inwardQuantity' ? 'Inward' : 'Outward'
-                ]}
-                labelStyle={{ color: '#374151', fontWeight: '600' }}
-                contentStyle={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                }}
-              />
-              <Legend 
-                wrapperStyle={{ paddingTop: '20px' }}
-                iconType="rect"
-              />
-              <Bar 
-                dataKey="inwardQuantity" 
-                name="Inward" 
-                fill="#667eea"
-                radius={[4, 4, 0, 0]}
-              />
-              <Bar 
-                dataKey="outwardQuantity" 
-                name="Outward" 
-                fill="#3dc47e"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+        {/* Enhanced Components List */}
+        <div className="components-list">
+          {topComponents.map((comp, index) => {
+            const maxUsage = Math.max(...topComponents.map(c => c.totalQuantity));
+            const usagePercentage = (comp.totalQuantity / maxUsage) * 100;
+            return (
+              <div key={comp._id || comp.component?._id} className="component-card">
+                <div className="component-rank">
+                  <div className={`rank-badge rank-${index + 1}`}>
+                    #{index + 1}
+                  </div>
+                </div>
+                <div className="component-info">
+                  <div className="component-details">
+                    <div className="component-name">
+                      {comp.component?.componentName || 'N/A'}
+                    </div>
+                    <div className="component-meta">
+                      <span className="part-number">
+                        <MdCode />
+                        {comp.component?.partNumber || 'N/A'}
+                      </span>
+                      <span className="component-category">
+                        <MdCategory />
+                        {comp.component?.category || 'Electronics'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="usage-info">
+                    <div className="usage-stats">
+                      <span className="usage-number">{comp.totalQuantity.toLocaleString()}</span>
+                      <span className="usage-label">units used</span>
+                    </div>
+                    <div className="usage-bar-container">
+                      <div className="usage-bar">
+                        <div
+                          className="usage-fill"
+                          style={{
+                            width: `${usagePercentage}%`,
+                            background: `hsl(${200 + index * 30}, 70%, 50%)`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="usage-percentage">{Math.round(usagePercentage)}%</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="component-actions">
+                  <button className="action-btn details-btn" title="View Details">
+                    <MdInfo />
+                  </button>
+                  <button className="action-btn trend-btn" title="View Trends">
+                    <MdTrendingUp />
+                  </button>
+                  <button className="action-btn inventory-btn" title="Check Inventory">
+                    <MdInventory />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
-
-        {/* Chart Insights */}
-        <div className="chart-insights">
-          <div className="insight-item">
-            <div className="insight-icon trend-up">
+        
+        {/* Usage Insights */}
+        <div className="usage-insights">
+          <div className="insight-card">
+            <div className="insight-icon high-usage">
               <MdTrendingUp />
             </div>
             <div className="insight-content">
-              <span className="insight-title">Peak Month</span>
+              <span className="insight-title">Highest Usage</span>
               <span className="insight-value">
-                {monthlyStats.reduce((prev, current) => 
-                  (prev.inwardQuantity + prev.outwardQuantity) > (current.inwardQuantity + current.outwardQuantity) ? prev : current
-                ).monthName}
+                {topComponents[0]?.component?.componentName || 'N/A'}
               </span>
             </div>
           </div>
-          <div className="insight-item">
-            <div className="insight-icon balance">
-              <MdBalance />
+          <div className="insight-card">
+            <div className="insight-icon consistent">
+              <MdTimeline />
             </div>
             <div className="insight-content">
-              <span className="insight-title">Net Flow</span>
+              <span className="insight-title">Most Consistent</span>
               <span className="insight-value">
-                {(monthlyStats.reduce((sum, month) => sum + (month.inwardQuantity || 0), 0) - 
-                  monthlyStats.reduce((sum, month) => sum + (month.outwardQuantity || 0), 0)).toLocaleString()} units
+                {topComponents[Math.floor(topComponents.length / 2)]?.component?.componentName || 'N/A'}
               </span>
             </div>
           </div>
@@ -952,492 +1613,1453 @@ ${JSON.stringify(smartInput, null, 2)}
       </>
     ) : (
       <div className="no-data-state">
-        <div className="no-data-icon">
-          <MdBarChart />
+        <div className="no-data-illustration">
+          <MdStorage className="no-data-icon" />
+          <div className="no-data-rings">
+            <div className="ring ring-1"></div>
+            <div className="ring ring-2"></div>
+            <div className="ring ring-3"></div>
+          </div>
         </div>
         <div className="no-data-content">
-          <h4>No Transaction Data</h4>
-          <p>Monthly transaction data will appear here once transactions are recorded.</p>
-          <button className="add-data-btn">
-            <MdAdd /> Add Transaction
+          <h3>No Usage Data Available</h3>
+          <p>Component usage statistics will appear here once transactions are recorded in the system.</p>
+          <button className="start-tracking-btn">
+            <MdAdd />
+            <span>Record Transaction</span>
           </button>
         </div>
       </div>
     )}
   </div>
 
-  {/* Enhanced Inline CSS */}
-  <style jsx>{`
-    .monthly-stats-enhanced {
+  {/* Inline CSS for Top Components */}
+  <style>{`
+    .top-components-enhanced {
       background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
       border: 1px solid #e2e8f0;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
       border-radius: 16px;
-      padding: 24px;
-      transition: all 0.3s ease;
-      position: relative;
+      padding: 0;
       overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
     }
-
-    .monthly-stats-enhanced:hover {
+    .top-components-enhanced:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     }
-
-    .monthly-stats-enhanced::before {
+    .top-components-enhanced::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 0; left: 0; right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #667eea 0%, #3dc47e 100%);
+      background: linear-gradient(90deg, #667eea 0%, #3dc47e 50%, #fd7e14 100%);
     }
-
-    .chart-header {
+    .top-components-header {
+      padding: 24px 24px 20px 24px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-bottom: 1px solid #e2e8f0;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #f1f5f9;
     }
-
-    .chart-title-section {
+    .header-content {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
     }
-
-    .chart-icon-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .title-icon-wrapper {
       width: 48px;
       height: 48px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    }
-
-    .chart-title-icon {
-      color: white;
-      font-size: 1.4rem;
-    }
-
-    .chart-title-content {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .chart-title {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #1f2937;
-      margin: 0 0 4px 0;
-      letter-spacing: -0.02em;
-    }
-
-    .chart-subtitle {
-      font-size: 0.9rem;
-      color: #6b7280;
-      margin: 0;
-      font-weight: 500;
-    }
-
-    .chart-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .chart-legend-compact {
-      display: flex;
-      gap: 16px;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.85rem;
-      color: #64748b;
-      font-weight: 500;
-    }
-
-    .legend-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-    }
-
-    .legend-dot.inward {
-      background: #667eea;
-    }
-
-    .legend-dot.outward {
-      background: #3dc47e;
-    }
-
-    .chart-export-btn {
-      width: 36px;
-      height: 36px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      color: #64748b;
-      transition: all 0.2s ease;
-      font-size: 1.1rem;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
-
-    .chart-export-btn:hover {
-      background: #e2e8f0;
-      color: #667eea;
+    .section-icon { color: white; font-size: 1.5rem; }
+    .title-content { display: flex; flex-direction: column; }
+    .section-title { font-size: 1.4rem; font-weight: 700; color: #1f2937; margin: 0 0 4px 0; letter-spacing: -0.02em; }
+    .section-subtitle { font-size: 0.9rem; color: #6b7280; margin: 0; font-weight: 500; }
+    .header-actions { display: flex; gap: 8px; }
+    .view-all-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px;
+      background: #667eea; color: white; border: none;
+      border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
     }
-
-    .chart-content {
-      position: relative;
+    .view-all-btn:hover { background: #5a67d8; transform: translateY(-1px);}
+    .export-btn {
+      width: 36px; height: 36px; background: #f1f5f9;
+      border: 1px solid #e2e8f0; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #64748b; transition: all 0.2s;
     }
-
-    .chart-summary {
+    .export-btn:hover { background: #e2e8f0; color: #667eea;}
+    .components-content { padding: 24px; }
+    .usage-summary {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-      padding: 16px;
+      gap: 16px; margin-bottom: 24px; padding: 16px;
       background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
+      border-radius: 12px; border: 1px solid #e2e8f0;
     }
-
-    .summary-stat {
-      text-align: center;
-      padding: 8px;
+    .summary-item { text-align: center; padding: 8px; }
+    .summary-number { display: block; font-size: 1.6rem; font-weight: 800; color: #1f2937; margin-bottom: 4px; }
+    .summary-label { font-size: 0.8rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .components-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+    .component-card {
+      display: flex; align-items: center; padding: 20px; background: white;
+      border: 1px solid #e2e8f0; border-radius: 12px; transition: all 0.3s;
+      position: relative; overflow: hidden;
     }
-
-    .summary-number {
-      display: block;
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #1f2937;
-      margin-bottom: 4px;
+    .component-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); border-color: #cbd5e1;}
+    .component-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+      background: linear-gradient(180deg, #667eea 0%, #3dc47e 100%);
+      opacity: 0; transition: opacity 0.3s;
     }
-
-    .summary-label {
-      font-size: 0.8rem;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-weight: 600;
+    .component-card:hover::before { opacity: 1;}
+    .component-rank { margin-right: 20px;}
+    .rank-badge {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.9rem; color: white; position: relative;
     }
-
-    .chart-container {
-      background: white;
-      border-radius: 12px;
-      padding: 16px;
-      border: 1px solid #f1f5f9;
-      margin-bottom: 20px;
-    }
-
-    .chart-insights {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-    }
-
-    .insight-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      transition: all 0.2s ease;
-    }
-
-    .insight-item:hover {
-      border-color: #cbd5e1;
-      transform: translateY(-1px);
-    }
-
-    .insight-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-    }
-
-    .insight-icon.trend-up {
-      background: #10b98115;
-      color: #10b981;
-    }
-
-    .insight-icon.balance {
-      background: #667eea15;
-      color: #667eea;
-    }
-
-    .insight-content {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .insight-title {
-      font-size: 0.8rem;
-      color: #6b7280;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .insight-value {
-      font-size: 1rem;
-      color: #1f2937;
-      font-weight: 600;
-      margin-top: 2px;
-    }
-
-    .no-data-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 60px 20px;
-      text-align: center;
-    }
-
-    .no-data-icon {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-      font-size: 2.2rem;
-      color: #9ca3af;
-    }
-
-    .no-data-content h4 {
-      color: #374151;
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin: 0 0 8px 0;
-    }
-
-    .no-data-content p {
-      color: #6b7280;
-      font-size: 1rem;
-      margin: 0 0 20px 0;
-      max-width: 300px;
-    }
-
-    .add-data-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 20px;
+    .rank-badge.rank-1 { background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1f2937; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);}
+    .rank-badge.rank-2 { background: linear-gradient(135deg, #c0c0c0, #e5e5e5); color: #1f2937; box-shadow: 0 4px 12px rgba(192,192,192,0.4);}
+    .rank-badge.rank-3 { background: linear-gradient(135deg, #cd7f32, #daa520); box-shadow: 0 4px 12px rgba(205,127,50,0.4);}
+    .rank-badge.rank-4, .rank-badge.rank-5 {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgba(102,126,234,0.3);
     }
-
-    .add-data-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    .component-info { flex: 1; display: flex; justify-content: space-between; align-items: center; margin-right: 16px;}
+    .component-details { flex: 1;}
+    .component-name { font-size: 1.1rem; font-weight: 700; color: #1f2937; margin-bottom: 8px; line-height: 1.3;}
+    .component-meta { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+    .part-number, .component-category {
+      display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #6b7280; font-weight: 500;
     }
-
-    /* Responsive Design */
+    .part-number svg, .component-category svg { font-size: 1rem;}
+    .usage-info { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; min-width: 140px;}
+    .usage-stats { text-align: right;}
+    .usage-number { font-size: 1.4rem; font-weight: 800; color: #1f2937; display: block; line-height: 1.2;}
+    .usage-label { font-size: 0.8rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;}
+    .usage-bar-container { display: flex; align-items: center; gap: 8px; width: 100%;}
+    .usage-bar { flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;}
+    .usage-fill {
+      height: 100%; border-radius: 4px; transition: width 0.8s; position: relative;
+    }
+    .usage-fill::after {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%);}
+    }
+    .usage-percentage { font-size: 0.8rem; font-weight: 600; color: #6b7280; min-width: 32px;}
+    .component-actions { display: flex; gap: 6px;}
+    .action-btn { width: 32px; height: 32px; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 1rem;}
+    .details-btn { background: #dbeafe; color: #1d4ed8;}
+    .details-btn:hover { background: #bfdbfe;}
+    .trend-btn { background: #dcfce7; color: #16a34a;}
+    .trend-btn:hover { background: #bbf7d0;}
+    .inventory-btn { background: #fef3c7; color: #d97706;}
+    .inventory-btn:hover { background: #fde68a;}
+    .usage-insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;}
+    .insight-card { display: flex; align-items: center; gap: 12px; padding: 16px; background: white; border: 1px solid #e2e8f0; border-radius: 10px; transition: all 0.2s;}
+    .insight-card:hover { border-color: #cbd5e1; transform: translateY(-1px);}
+    .insight-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;}
+    .insight-icon.high-usage { background: #dbeafe; color: #1d4ed8;}
+    .insight-icon.consistent { background: #dcfce7; color: #16a34a;}
+    .insight-content { display: flex; flex-direction: column;}
+    .insight-title { font-size: 0.8rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .insight-value { font-size: 1rem; color: #1f2937; font-weight: 700; margin-top: 2px;}
+    .no-data-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; }
+    .no-data-illustration { position: relative; margin-bottom: 24px;}
+    .no-data-icon { font-size: 4rem; color: #9ca3af; z-index: 2; position: relative;}
+    .no-data-content h3 { color: #374151; font-size: 1.3rem; font-weight: 700; margin: 0 0 8px 0;}
+    .no-data-content p { color: #6b7280; font-size: 1rem; margin: 0 0 24px 0; max-width: 400px; line-height: 1.5;}
+    .start-tracking-btn { display: flex; align-items: center; gap: 8px; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1rem;}
+    .start-tracking-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102,126,234,0.3);}
     @media (max-width: 768px) {
-      .chart-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-      }
-
-      .chart-actions {
-        align-self: stretch;
-        justify-content: space-between;
-      }
-
-      .chart-summary {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        padding: 12px;
-      }
-
-      .summary-number {
-        font-size: 1.2rem;
-      }
-
-      .chart-insights {
-        grid-template-columns: 1fr;
-      }
-
-      .chart-title-section {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-
-      .chart-icon-container {
-        width: 40px;
-        height: 40px;
-      }
-
-      .chart-title-icon {
-        font-size: 1.2rem;
-      }
+      .top-components-header { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
+      .header-actions { align-self: stretch; justify-content: space-between;}
+      .view-all-btn { flex: 1; justify-content: center;}
+      .component-card { flex-direction: column; align-items: flex-start; gap: 16px; padding: 16px;}
+      .component-info { width: 100%; flex-direction: column; align-items: flex-start; gap: 12px;}
+      .usage-info { width: 100%; align-items: flex-start;}
+      .usage-stats { text-align: left;}
+      .component-actions { align-self: flex-end; }
+      .usage-summary { grid-template-columns: repeat(2, 1fr);}
+      .usage-insights { grid-template-columns: 1fr;}
     }
-
     @media (max-width: 480px) {
-      .monthly-stats-enhanced {
-        padding: 16px;
-      }
-
-      .chart-summary {
-        grid-template-columns: 1fr;
-        text-align: center;
-      }
-
-      .legend-item {
-        font-size: 0.8rem;
-      }
-
-      .chart-container {
-        padding: 12px;
-      }
-    }
-
-    /* Loading animation for chart */
-    @keyframes chartLoad {
-      0% { opacity: 0; transform: translateY(20px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-
-    .chart-container {
-      animation: chartLoad 0.5s ease-out;
+      .components-content { padding: 16px;}
+      .usage-summary { grid-template-columns: 1fr; text-align: center;}
+      .component-meta { flex-direction: column; align-items: flex-start; gap: 8px;}
     }
   `}</style>
-</div>
+            </div>
 
 
-            {/* Chart: Daily Usage Trends */}
-            <div className="dashboard-section chart-card daily-trends-card">
-              <h2 className="section-title"><MdTrendingUp /> Daily Usage Trends (Last 7 Days)</h2>
-              <div className="chart-placeholder">
-                {dailyTrends.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={dailyTrends} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="_id" />
-                      <YAxis />
-                      <Tooltip formatter={(value) => `${value.toLocaleString()} units`} />
-                      <Legend />
-                      <Line type="monotone" dataKey="inwardQuantity" name="Inward" stroke="var(--primary-blue)" strokeWidth={2} />
-                      <Line type="monotone" dataKey="outwardQuantity" name="Outward" stroke="var(--success-green)" strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
+            {/* Enhanced User Activity */}
+            <div className="dashboard-section user-activity-enhanced">
+              <div className="user-activity-header">
+                <div className="header-content">
+                  <div className="title-icon-wrapper">
+                    <MdHistory className="section-icon" />
+                  </div>
+                  <div className="title-content">
+                    <h2 className="section-title">User Activity</h2>
+                    <p className="section-subtitle">Team performance and engagement metrics</p>
+                  </div>
+                </div>
+                <div className="header-actions">
+                  <div className="activity-filter">
+                    <button className="filter-btn active" data-filter="all">All</button>
+                    <button className="filter-btn" data-filter="today">Today</button>
+                    <button className="filter-btn" data-filter="week">Week</button>
+                  </div>
+                  <button className="export-btn">
+                    <MdGetApp />
+                  </button>
+                </div>
+              </div>
+
+              <div className="activity-content">
+                {userActivityData ? (
+                  <>
+                    {/* Activity Overview Stats */}
+                    <div className="activity-overview">
+                      <div className="overview-stat">
+                        <div className="stat-icon transactions">
+                          <MdSwapHoriz />
+                        </div>
+                        <div className="stat-content">
+                          <span className="stat-number">
+                            {userActivityData.userActivity.reduce((sum, activity) => 
+                              sum + activity.inwardTransactions + activity.outwardTransactions, 0
+                            ).toLocaleString()}
+                          </span>
+                          <span className="stat-label">Total Transactions</span>
+                        </div>
+                      </div>
+                      
+                      <div className="overview-stat">
+                        <div className="stat-icon active-users">
+                          <MdPeople />
+                        </div>
+                        <div className="stat-content">
+                          <span className="stat-number">{userActivityData.recentlyActiveUsers.length}</span>
+                          <span className="stat-label">Active Users</span>
+                        </div>
+                      </div>
+                      
+                      <div className="overview-stat">
+                        <div className="stat-icon total-value">
+                          <MdAttachMoney />
+                        </div>
+                        <div className="stat-content">
+                          <span className="stat-number">
+                            {formatCurrency(userActivityData.userActivity.reduce((sum, activity) => 
+                              sum + (activity.totalValueHandled || 0), 0
+                            ))}
+                          </span>
+                          <span className="stat-label">Total Value</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Transaction Activity Section */}
+                    <div className="activity-section">
+                      <div className="section-header">
+                        <div className="section-title-group">
+                          <MdBarChart className="section-icon-small" />
+                          <h3>Transaction Activity</h3>
+                        </div>
+                        <span className="activity-count">{userActivityData.userActivity.length} users</span>
+                      </div>
+                      
+                      {userActivityData.userActivity.length > 0 ? (
+                        <div className="transaction-cards">
+                          {userActivityData.userActivity.map((activity, index) => {
+                            const totalTransactions = activity.inwardTransactions + activity.outwardTransactions;
+                            const inwardPercentage = totalTransactions ? (activity.inwardTransactions / totalTransactions) * 100 : 0;
+                            const outwardPercentage = totalTransactions ? (activity.outwardTransactions / totalTransactions) * 100 : 0;
+                            
+                            return (
+                              <div key={activity._id} className="transaction-card">
+                                <div className="card-header">
+                                  <div className="user-profile">
+                                    <div className="user-avatar">
+                                      <span className="avatar-text">
+                                        {activity.userName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                      </span>
+                                      <div className="status-indicator active"></div>
+                                    </div>
+                                    <div className="user-info">
+                                      <span className="user-name">{activity.userName}</span>
+                                      <span className="user-role">{activity.userRole}</span>
+                                    </div>
+                                  </div>
+                                  <div className="performance-badge">
+                                    <MdTrendingUp />
+                                    <span>
+                                      {index === 0 ? 'Top' : index === 1 ? '2nd' : index === 2 ? '3rd' : `${index + 1}th`}
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                <div className="transaction-stats">
+                                  <div className="stat-row">
+                                    <div className="stat-item inward">
+                                      <div className="stat-icon">
+                                        <MdArrowDownward />
+                                      </div>
+                                      <div className="stat-details">
+                                        <span className="stat-number">{activity.inwardTransactions}</span>
+                                        <span className="stat-label">Inward</span>
+                                      </div>
+                                      <div className="stat-percentage">{Math.round(inwardPercentage)}%</div>
+                                    </div>
+                                    
+                                    <div className="stat-item outward">
+                                      <div className="stat-icon">
+                                        <MdArrowUpward />
+                                      </div>
+                                      <div className="stat-details">
+                                        <span className="stat-number">{activity.outwardTransactions}</span>
+                                        <span className="stat-label">Outward</span>
+                                      </div>
+                                      <div className="stat-percentage">{Math.round(outwardPercentage)}%</div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="transaction-bar">
+                                    <div className="bar-fill inward-fill" style={{width: `${inwardPercentage}%`}}></div>
+                                    <div className="bar-fill outward-fill" style={{width: `${outwardPercentage}%`}}></div>
+                                  </div>
+                                </div>
+                                
+                                <div className="summary-stats">
+                                  <div className="summary-item">
+                                    <span className="summary-label">Total Units</span>
+                                    <span className="summary-value">{activity.totalQuantityHandled?.toLocaleString() || 0}</span>
+                                  </div>
+                                  <div className="summary-item">
+                                    <span className="summary-label">Total Value</span>
+                                    <span className="summary-value">{formatCurrency(activity.totalValueHandled || 0)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="no-data-message">No user transaction activity found.</div>
+                      )}
+                    </div>
+
+                    {/* Recently Active Users Section */}
+                    <div className="activity-section">
+                      <div className="section-header">
+                        <div className="section-title-group">
+                          <MdAccessTime className="section-icon-small" />
+                          <h3>Recently Active Users</h3>
+                        </div>
+                        <span className="activity-count">{userActivityData.recentlyActiveUsers.length} online</span>
+                      </div>
+                      
+                      {userActivityData.recentlyActiveUsers.length > 0 ? (
+                        <div className="recent-users-grid">
+                          {userActivityData.recentlyActiveUsers.map(user => {
+                            const lastLogin = new Date(user.lastLogin);
+                            const now = new Date();
+                            const diffInMinutes = Math.floor((now - lastLogin) / (1000 * 60));
+                            const timeAgo = diffInMinutes < 60 ? 
+                              `${diffInMinutes}m ago` : 
+                              diffInMinutes < 1440 ? 
+                              `${Math.floor(diffInMinutes / 60)}h ago` : 
+                              `${Math.floor(diffInMinutes / 1440)}d ago`;
+                            
+                            return (
+                              <div key={user._id} className="recent-user-card">
+                                <div className="user-card-header">
+                                  <div className="user-avatar-large">
+                                    <span className="avatar-text">
+                                      {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                    </span>
+                                    <div className={`status-indicator ${diffInMinutes < 30 ? 'online' : 'away'}`}></div>
+                                  </div>
+                                  <div className="user-details">
+                                    <span className="user-name-large">{user.name}</span>
+                                    <span className="user-role-badge">{user.role}</span>
+                                  </div>
+                                </div>
+                                
+                                <div className="user-activity-info">
+                                  <div className="activity-time">
+                                    <MdSchedule />
+                                    <span>Last seen {timeAgo}</span>
+                                  </div>
+                                  <div className="login-details">
+                                    <span className="login-date">{lastLogin.toLocaleDateString()}</span>
+                                    <span className="login-time">{lastLogin.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="no-data-message">No recently active users found.</div>
+                      )}
+                    </div>
+                  </>
                 ) : (
-                  <p className="no-data-message">No daily usage trend data available.</p>
+                  <div className="no-data-state">
+                    <div className="no-data-illustration">
+                      <MdHistory className="no-data-icon" />
+                      <div className="access-denied-badge">
+                        <MdLock />
+                      </div>
+                    </div>
+                    <div className="no-data-content">
+                      <h3>Admin Access Required</h3>
+                      <p>User activity data is only available to administrators. Please contact your system administrator for access.</p>
+                      <button className="request-access-btn">
+                        <MdSecurity />
+                        <span>Request Access</span>
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
 
-            {/* Top Components */}
-            <div className="dashboard-section top-components-card">
-              <h2 className="section-title"><MdStorage /> Top 5 Components by Usage</h2>
-              {topComponents.length > 0 ? (
-                <ul className="top-components-list">
-                  {topComponents.map(comp => (
-                    <li key={comp._id || comp.component?._id} className="component-item">
-                      <span className="component-name">{comp.component?.componentName || 'N/A'}</span>
-                      <span className="component-part-number">({comp.component?.partNumber || 'N/A'})</span>
-                      <span className="component-quantity">Used: {comp.totalQuantity}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="no-data-message">No top components data available.</p>
-              )}
-            </div>
+              {/* Enhanced Inline CSS */}
+              <style>{`
+                .user-activity-enhanced {
+                  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+                  border: 1px solid #e2e8f0;
+                  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+                  border-radius: 16px;
+                  padding: 0;
+                  overflow: hidden;
+                  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                  position: relative;
+                }
 
-            {/* User Activity */}
-            <div className="dashboard-section user-activity-card">
-              <h2 className="section-title"><MdHistory /> User Activity</h2>
-              {userActivityData ? (
-                <div className="user-activity-content">
-                  <h3>Transaction Activity</h3>
-                  {userActivityData.userActivity.length > 0 ? (
-                    <ul className="activity-list">
-                      {userActivityData.userActivity.map(activity => (
-                        <li key={activity._id} className="activity-item">
-                          <strong>{activity.userName} ({activity.userRole})</strong><br />
-                          Inward: {activity.inwardTransactions}, Outward: {activity.outwardTransactions} transactions.<br />
-                          Total Handled: {activity.totalQuantityHandled} units ({formatCurrency(activity.totalValueHandled)})
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <p className="no-data-message">No user transaction activity found.</p>}
-                  <h3 style={{marginTop: '1rem'}}>Recently Active Users</h3>
-                  {userActivityData.recentlyActiveUsers.length > 0 ? (
-                    <ul className="activity-list">
-                      {userActivityData.recentlyActiveUsers.map(user => (
-                        <li key={user._id} className="activity-item">
-                          <strong>{user.name} ({user.role})</strong> - Last Login: {new Date(user.lastLogin).toLocaleString()}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <p className="no-data-message">No recently active users found.</p>}
-                </div>
-              ) : <p className="no-data-message">User activity data not available (Admin Only).</p>}
+                .user-activity-enhanced:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                }
+
+                .user-activity-enhanced::before {
+                  content: '';
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  height: 4px;
+                  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #3dc47e 100%);
+                }
+
+                /* Header Styles */
+                .user-activity-header {
+                  padding: 24px 24px 20px 24px;
+                  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                  border-bottom: 1px solid #e2e8f0;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-start;
+                }
+
+                .header-content {
+                  display: flex;
+                  align-items: center;
+                  gap: 16px;
+                }
+
+                .title-icon-wrapper {
+                  width: 48px;
+                  height: 48px;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  border-radius: 12px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                }
+
+                .section-icon {
+                  color: white;
+                  font-size: 1.5rem;
+                }
+
+                .title-content {
+                  display: flex;
+                  flex-direction: column;
+                }
+
+                .section-title {
+                  font-size: 1.4rem;
+                  font-weight: 700;
+                  color: #1f2937;
+                  margin: 0 0 4px 0;
+                  letter-spacing: -0.02em;
+                }
+
+                .section-subtitle {
+                  font-size: 0.9rem;
+                  color: #6b7280;
+                  margin: 0;
+                  font-weight: 500;
+                }
+
+                .header-actions {
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                }
+
+                .activity-filter {
+                  display: flex;
+                  background: white;
+                  border: 1px solid #e2e8f0;
+                  border-radius: 8px;
+                  padding: 2px;
+                }
+
+                .filter-btn {
+                  padding: 6px 12px;
+                  background: transparent;
+                  border: none;
+                  border-radius: 6px;
+                  font-size: 0.85rem;
+                  font-weight: 500;
+                  cursor: pointer;
+                  transition: all 0.2s ease;
+                  color: #6b7280;
+                }
+
+                .filter-btn.active {
+                  background: #667eea;
+                  color: white;
+                  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+                }
+
+                .filter-btn:not(.active):hover {
+                  background: #f8fafc;
+                  color: #374151;
+                }
+
+                .export-btn {
+                  width: 36px;
+                  height: 36px;
+                  background: #f1f5f9;
+                  border: 1px solid #e2e8f0;
+                  border-radius: 8px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  cursor: pointer;
+                  color: #64748b;
+                  transition: all 0.2s ease;
+                }
+
+                .export-btn:hover {
+                  background: #e2e8f0;
+                  color: #667eea;
+                }
+
+                /* Content Styles */
+                .activity-content {
+                  padding: 24px;
+                }
+
+                /* Activity Overview */
+                .activity-overview {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                  gap: 16px;
+                  margin-bottom: 32px;
+                  padding: 20px;
+                  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                  border-radius: 12px;
+                  border: 1px solid #e2e8f0;
+                }
+
+                .overview-stat {
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                  padding: 16px;
+                  background: white;
+                  border-radius: 10px;
+                  border: 1px solid #e2e8f0;
+                  transition: all 0.2s ease;
+                }
+
+                .overview-stat:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+
+                .stat-icon {
+                  width: 44px;
+                  height: 44px;
+                  border-radius: 10px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 1.3rem;
+                }
+
+                .stat-icon.transactions {
+                  background: #dbeafe;
+                  color: #1d4ed8;
+                }
+
+                .stat-icon.active-users {
+                  background: #dcfce7;
+                  color: #16a34a;
+                }
+
+                .stat-icon.total-value {
+                  background: #fef3c7;
+                  color: #d97706;
+                }
+
+                .stat-content {
+                  display: flex;
+                  flex-direction: column;
+                }
+
+                .stat-number {
+                  font-size: 1.6rem;
+                  font-weight: 800;
+                  color: #1f2937;
+                  line-height: 1.2;
+                }
+
+                .stat-label {
+                  font-size: 0.8rem;
+                  color: #6b7280;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  font-weight: 600;
+                }
+
+                /* Activity Sections */
+                .activity-section {
+                  margin-bottom: 32px;
+                }
+
+                .activity-section:last-child {
+                  margin-bottom: 0;
+                }
+
+                .section-header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 20px;
+                  padding-bottom: 12px;
+                  border-bottom: 2px solid #f1f5f9;
+                }
+
+                .section-title-group {
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                }
+
+                .section-icon-small {
+                  font-size: 1.2rem;
+                  color: #667eea;
+                }
+
+                .section-header h3 {
+                  font-size: 1.2rem;
+                  font-weight: 700;
+                  color: #1f2937;
+                  margin: 0;
+                }
+
+                .activity-count {
+                  font-size: 0.85rem;
+                  color: #6b7280;
+                  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+                  padding: 4px 12px;
+                  border-radius: 12px;
+                  font-weight: 600;
+                }
+
+                /* Transaction Cards */
+                .transaction-cards {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                  gap: 20px;
+                }
+
+                .transaction-card {
+                  background: white;
+                  border: 1px solid #e2e8f0;
+                  border-radius: 12px;
+                  padding: 20px;
+                  transition: all 0.3s ease;
+                  position: relative;
+                  overflow: hidden;
+                }
+
+                .transaction-card:hover {
+                  transform: translateY(-4px);
+                  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+                  border-color: #cbd5e1;
+                }
+
+                .transaction-card::before {
+                  content: '';
+                  position: absolute;
+                  left: 0;
+                  top: 0;
+                  bottom: 0;
+                  width: 4px;
+                  background: linear-gradient(180deg, #667eea 0%, #3dc47e 100%);
+                  opacity: 0;
+                  transition: opacity 0.3s ease;
+                }
+
+                .transaction-card:hover::before {
+                  opacity: 1;
+                }
+
+                .card-header {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 20px;
+                }
+
+                .user-profile {
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                }
+
+                .user-avatar {
+                  position: relative;
+                  width: 48px;
+                  height: 48px;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                }
+
+                .avatar-text {
+                  color: white;
+                  font-weight: 700;
+                  font-size: 1rem;
+                  letter-spacing: 0.5px;
+                }
+
+                .status-indicator {
+                  position: absolute;
+                  bottom: 2px;
+                  right: 2px;
+                  width: 12px;
+                  height: 12px;
+                  border: 2px solid white;
+                  border-radius: 50%;
+                }
+
+                .status-indicator.active {
+                  background: #10b981;
+                }
+
+                .status-indicator.online {
+                  background: #10b981;
+                  animation: pulse-online 2s infinite;
+                }
+
+                .status-indicator.away {
+                  background: #f59e0b;
+                }
+
+                @keyframes pulse-online {
+                  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+                  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+                  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+                }
+
+                .user-info {
+                  display: flex;
+                  flex-direction: column;
+                }
+
+                .user-name {
+                  font-weight: 700;
+                  color: #1f2937;
+                  font-size: 1rem;
+                  line-height: 1.2;
+                }
+
+                .user-role {
+                  font-size: 0.85rem;
+                  color: #6b7280;
+                  text-transform: capitalize;
+                  font-weight: 500;
+                }
+
+                .performance-badge {
+                  display: flex;
+                  align-items: center;
+                  gap: 4px;
+                  padding: 4px 8px;
+                  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+                  color: #16a34a;
+                  border-radius: 6px;
+                  font-size: 0.8rem;
+                  font-weight: 600;
+                }
+
+                /* Transaction Stats */
+                .transaction-stats {
+                  margin-bottom: 16px;
+                }
+
+                .stat-row {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 12px;
+                  margin-bottom: 12px;
+                }
+
+                .stat-item {
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  padding: 8px;
+                  border-radius: 8px;
+                  transition: all 0.2s ease;
+                }
+
+                .stat-item.inward {
+                  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+                }
+
+                .stat-item.outward {
+                  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+                }
+
+                .stat-item .stat-icon {
+                  width: 24px;
+                  height: 24px;
+                  border-radius: 4px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 1rem;
+                }
+
+                .stat-item.inward .stat-icon {
+                  background: #1d4ed8;
+                  color: white;
+                }
+
+                .stat-item.outward .stat-icon {
+                  background: #16a34a;
+                  color: white;
+                }
+
+                .stat-details {
+                  flex: 1;
+                  display: flex;
+                  flex-direction: column;
+                }
+
+                .stat-details .stat-number {
+                  font-size: 1.1rem;
+                  font-weight: 700;
+                  color: #1f2937;
+                  line-height: 1.2;
+                }
+
+                .stat-details .stat-label {
+                  font-size: 0.75rem;
+                  color: #6b7280;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  font-weight: 600;
+                }
+
+                .stat-percentage {
+                  font-size: 0.8rem;
+                  font-weight: 600;
+                  color: #374151;
+                }
+
+                .transaction-bar {
+                  height: 6px;
+                  background: #e5e7eb;
+                  border-radius: 3px;
+                  overflow: hidden;
+                  display: flex;
+                }
+
+                .bar-fill {
+                  height: 100%;
+                  transition: width 0.8s ease;
+                }
+
+                .inward-fill {
+                  background: linear-gradient(90deg, #1d4ed8 0%, #3b82f6 100%);
+                }
+
+                .outward-fill {
+                  background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
+                }
+
+                /* Summary Stats */
+                .summary-stats {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 12px;
+                  padding-top: 16px;
+                  border-top: 1px solid #f1f5f9;
+                }
+
+                .summary-item {
+                  text-align: center;
+                }
+
+                .summary-label {
+                  display: block;
+                  font-size: 0.75rem;
+                  color: #6b7280;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  font-weight: 600;
+                  margin-bottom: 4px;
+                }
+
+                .summary-value {
+                  font-size: 1rem;
+                  font-weight: 700;
+                  color: #1f2937;
+                }
+
+                /* Recent Users Grid */
+                .recent-users-grid {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                  gap: 16px;
+                }
+
+                .recent-user-card {
+                  background: white;
+                  border: 1px solid #e2e8f0;
+                  border-radius: 12px;
+                  padding: 16px;
+                  transition: all 0.3s ease;
+                }
+
+                .recent-user-card:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+                  border-color: #cbd5e1;
+                }
+
+                .user-card-header {
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                  margin-bottom: 12px;
+                }
+
+                .user-avatar-large {
+                  position: relative;
+                  width: 44px;
+                  height: 44px;
+                  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                }
+
+                .user-details {
+                  flex: 1;
+                  display: flex;
+                  flex-direction: column;
+                }
+
+                .user-name-large {
+                  font-weight: 700;
+                  color: #1f2937;
+                  font-size: 0.95rem;
+                  line-height: 1.2;
+                }
+
+                .user-role-badge {
+                  font-size: 0.75rem;
+                  color: #6b7280;
+                  text-transform: capitalize;
+                  font-weight: 500;
+                  background: #f1f5f9;
+                  padding: 2px 6px;
+                  border-radius: 4px;
+                  display: inline-block;
+                  width: fit-content;
+                  margin-top: 2px;
+                }
+
+                .user-activity-info {
+                  display: flex;
+                  flex-direction: column;
+                  gap: 8px;
+                }
+
+                .activity-time {
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  font-size: 0.85rem;
+                  color: #6b7280;
+                  font-weight: 500;
+                }
+
+                .activity-time svg {
+                  font-size: 1rem;
+                }
+
+                .login-details {
+                  display: flex;
+                  justify-content: space-between;
+                  font-size: 0.8rem;
+                  color: #9ca3af;
+                }
+
+                .login-date {
+                  font-weight: 500;
+                }
+
+                .login-time {
+                  font-weight: 600;
+                }
+
+                /* No Data State */
+                .no-data-state {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  padding: 60px 20px;
+                  text-align: center;
+                }
+
+                .no-data-illustration {
+                  position: relative;
+                  margin-bottom: 24px;
+                }
+
+                .no-data-icon {
+                  font-size: 4rem;
+                  color: #d1d5db;
+                  z-index: 1;
+                  position: relative;
+                }
+
+                .access-denied-badge {
+                  position: absolute;
+                  bottom: -8px;
+                  right: -8px;
+                  width: 32px;
+                  height: 32px;
+                  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: white;
+                  font-size: 1rem;
+                  border: 3px solid white;
+                  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+                }
+
+                .no-data-content h3 {
+                  color: #374151;
+                  font-size: 1.3rem;
+                  font-weight: 700;
+                  margin: 0 0 8px 0;
+                }
+
+                .no-data-content p {
+                  color: #6b7280;
+                  font-size: 1rem;
+                  margin: 0 0 24px 0;
+                  max-width: 400px;
+                  line-height: 1.5;
+                }
+
+                .request-access-btn {
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  padding: 12px 24px;
+                  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                  color: white;
+                  border: none;
+                  border-radius: 10px;
+                  font-weight: 600;
+                  cursor: pointer;
+                  transition: all 0.3s ease;
+                  font-size: 1rem;
+                }
+
+                .request-access-btn:hover {
+                  transform: translateY(-2px);
+                  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+                }
+
+                .no-data-message {
+                  text-align: center;
+                  color: #6b7280;
+                  font-style: italic;
+                  padding: 20px;
+                  background: #f9fafb;
+                  border-radius: 8px;
+                  border: 1px dashed #d1d5db;
+                }
+
+                /* Responsive Design */
+                @media (max-width: 768px) {
+                  .user-activity-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 16px;
+                    padding: 20px;
+                  }
+
+                  .header-actions {
+                    align-self: stretch;
+                    justify-content: space-between;
+                  }
+
+                  .activity-filter {
+                    flex: 1;
+                  }
+
+                  .filter-btn {
+                    flex: 1;
+                    text-align: center;
+                  }
+
+                  .activity-overview {
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 12px;
+                    padding: 16px;
+                  }
+
+                  .transaction-cards {
+                    grid-template-columns: 1fr;
+                    gap: 16px;
+                  }
+
+                  .recent-users-grid {
+                    grid-template-columns: 1fr;
+                  }
+
+                  .stat-row {
+                    grid-template-columns: 1fr;
+                    gap: 8px;
+                  }
+
+                  .summary-stats {
+                    grid-template-columns: 1fr;
+                    gap: 8px;
+                  }
+                }
+
+                @media (max-width: 480px) {
+                  .activity-content {
+                    padding: 16px;
+                  }
+
+                  .activity-overview {
+                    grid-template-columns: 1fr;
+                    text-align: center;
+                  }
+
+                  .transaction-card {
+                    padding: 16px;
+                  }
+
+                  .section-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 8px;
+                  }
+
+                  .activity-count {
+                    align-self: stretch;
+                    text-align: center;
+                  }
+                }
+              `}</style>
             </div>
 
             {/* System Stats */}
-            <div className="dashboard-section system-stats-card">
-              <h2 className="section-title"><MdSettingsApplications /> System Statistics</h2>
-              {systemStatsData ? (
-                <div className="system-stats-content">
-                  <h3>Users</h3>
-                  <ul className="stats-list">
-                    <li>Total<span>{systemStatsData.users.total}</span></li>
-                    <li>Active<span>{systemStatsData.users.active}</span></li>
-                    <li>Inactive<span>{systemStatsData.users.inactive}</span></li>
-                  </ul>
-                  <h3>Components</h3>
-                  <ul className="stats-list">
-                    <li>Total<span>{systemStatsData.components.total}</span></li>
-                    <li>Active<span>{systemStatsData.components.active}</span></li>
-                    <li>Obsolete<span>{systemStatsData.components.obsolete}</span></li>
-                  </ul>
-                  <h3>Storage by Category</h3>
-                  {systemStatsData.storageByCategory.length > 0 ? (
-                    <ul className="stats-list category-storage">
-                      {systemStatsData.storageByCategory.map(cat => (
-                        <li key={cat._id}>
-                          <strong>{cat._id || 'Uncategorized'}:</strong> {cat.totalQuantity} units ({formatCurrency(cat.totalValue)})
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <p className="no-data-message">No category data.</p>}
-                </div>
-              ) : <p className="no-data-message">System statistics not available (Admin Only).</p>}
+            <div className="dashboard-section system-stats-enhanced">
+  <div className="system-stats-header">
+    <div className="header-content">
+      <div className="title-icon-wrapper">
+        <MdSettingsApplications className="section-icon" />
+      </div>
+      <div className="title-content">
+        <h2 className="section-title">System Statistics</h2>
+        <p className="section-subtitle">Overview of users, inventory, and utilization</p>
+      </div>
+    </div>
+  </div>
+
+  <div className="stats-content">
+    {systemStatsData ? (
+      <>
+        {/* Quick Grid Summary */}
+        <div className="stats-overview-grid">
+          <div className="stat-card users">
+            <span className="stat-card-title">Users</span>
+            <div className="stat-figures">
+              <div>
+                <span className="stat-num">{systemStatsData.users.total}</span>
+                <span className="stat-label">Total</span>
+              </div>
+              <div>
+                <span className="stat-num success">{systemStatsData.users.active}</span>
+                <span className="stat-label">Active</span>
+              </div>
+              <div>
+                <span className="stat-num muted">{systemStatsData.users.inactive}</span>
+                <span className="stat-label">Inactive</span>
+              </div>
             </div>
           </div>
+          <div className="stat-card components">
+            <span className="stat-card-title">Components</span>
+            <div className="stat-figures">
+              <div>
+                <span className="stat-num">{systemStatsData.components.total}</span>
+                <span className="stat-label">Total</span>
+              </div>
+              <div>
+                <span className="stat-num success">{systemStatsData.components.active}</span>
+                <span className="stat-label">Active</span>
+              </div>
+              <div>
+                <span className="stat-num warning">{systemStatsData.components.obsolete}</span>
+                <span className="stat-label">Obsolete</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Storage by Category */}
+        <div className="category-section">
+          <div className="category-section-header">
+            <h3>Storage by Category</h3>
+          </div>
+          {systemStatsData.storageByCategory.length > 0 ? (
+            <ul className="category-bar-list">
+              {systemStatsData.storageByCategory.map((cat, i) => {
+                const maxQty = Math.max(...systemStatsData.storageByCategory.map(c => c.totalQuantity));
+                const percent = Math.round(100 * (cat.totalQuantity / (maxQty || 1)));
+                // Use color cycling for bars
+                const barColor = `hsl(${200 + i*38}, 66%, 53%)`;
+                return (
+                  <li className="category-bar-row" key={cat._id}>
+                    <span className="cat-label">
+                      <span className="cat-dot" style={{ background: barColor }}></span>
+                      <strong>{cat._id || 'Uncategorized'}</strong>
+                    </span>
+                    <div className="cat-bar-track">
+                      <div className="cat-bar-fill" style={{ width: `${percent}%`, background: barColor }} />
+                    </div>
+                    <span className="cat-bar-percent">
+                      {cat.totalQuantity} units
+                    </span>
+                    <span className="cat-bar-value">
+                      ({formatCurrency ? formatCurrency(cat.totalValue) : cat.totalValue.toLocaleString()})
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="no-data-message">No category data.</div>
+          )}
+        </div>
+      </>
+    ) : (
+      <div className="no-data-message">System statistics not available (Admin Only).</div>
+    )}
+  </div>
+
+  {/* --- Modern Inline CSS --- */}
+  <style>{`
+.system-stats-enhanced {
+  background: linear-gradient(135deg, #fff 0%, #fafbfc 100%);
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 10px;
+}
+.system-stats-header {
+  padding: 24px 24px 18px 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+}
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.title-icon-wrapper {
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px #667eea33;
+}
+.section-icon { color: white; font-size: 1.5rem; }
+.title-content { display: flex; flex-direction: column; }
+.section-title { font-size: 1.3rem; font-weight: 700; color: #1f2937; margin: 0; }
+.section-subtitle { font-size: 0.92rem; color: #6b7280; margin: 4px 0 0 0; font-weight: 500;}
+
+.stats-content { padding: 24px; }
+
+/* Stats overview grid */
+.stats-overview-grid {
+  display: flex;
+  gap: 22px;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+.stat-card {
+  flex: 1 1 260px;
+  min-width: 220px;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 9px #667eea17;
+  display: flex; flex-direction: column; padding: 20px; gap: 13px;
+}
+
+.stat-card.users .stat-card-title { color: #4651b4 }
+.stat-card.components .stat-card-title { color: #3dc468 }
+.stat-card-title {
+  font-size: 1.09rem;
+  letter-spacing: 0.6px;
+  font-weight: 800;
+  margin-bottom: 3px;
+}
+.stat-figures { display: flex; flex-direction: row; gap: 21px; margin-top: 2px;}
+.stat-num { font-size: 1.58rem; font-weight: 700; color: #2a2c40; }
+.stat-num.success { color: #16a34a; }
+.stat-num.warning { color: #fd9800; }
+.stat-num.muted { color: #748093; }
+.stat-label { font-size: 0.81rem; color: #8ca6c0; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;}
+.stat-figures div { text-align: center; border-right: 1px solid #e7e7ea; padding: 0 11px;}
+.stat-figures div:last-child { border-right: none; }
+
+/* Category storage section */
+.category-section { margin-top: 18px; background: #fff; border-radius: 12px; box-shadow: 0 2px 9px #8398a017; padding: 18px 14px 13px 14px; border: 1px solid #ececec;}
+.category-section-header h3 { margin: 0 0 13px 0; color: #34425b; font-size: 1.12rem; font-weight: 700; letter-spacing: 0.1px; }
+.category-bar-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 13px;}
+.category-bar-row {
+  display: flex; align-items: center; gap: 13px; margin-bottom: 0;
+  flex-wrap: wrap;
+}
+.cat-label {
+  min-width: 125px;
+  font-size: 1em;
+  color: #34426f;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.cat-dot {
+  display: inline-block;
+  width: 13px; height: 13px;
+  border-radius: 60%;
+  border: 2.2px solid #fff;
+  margin-right: 2px;
+  box-shadow: 0 0.5px 3px rgba(0,0,0,0.05)
+}
+.cat-bar-track { background: #f0f4fa; width: 100%; height: 13px; border-radius: 7px; overflow: hidden; position: relative; margin: 0 3px;}
+.cat-bar-fill {
+  height: 100%;
+  border-radius: 7px;
+  min-width: 4%;
+  transition: width 0.6s;
+  max-width: 100%;
+  box-shadow: 0 1px 6px #8aeaff25 inset;
+}
+.cat-bar-percent {
+  min-width: 82px;
+  font-size: .99em;
+  color: #283040;
+  font-weight: 500;
+}
+.cat-bar-value {
+  font-size: 0.96em;
+  color: #535e7c;
+  padding-left: 3px;
+}
+.no-data-message {
+  font-size: 1.02em;
+  line-height: 1.8;
+  background: #f5f7fa;
+  border: 1.3px dashed #e4e8f3;
+  border-radius: 9px;
+  color: #7a8499;
+  padding: 21px 0;
+  text-align: center;
+  margin-top: 12px;
+}
+
+@media (max-width: 900px) {
+  .stats-content { padding: 12px 0; }
+  .stats-overview-grid { flex-direction: column; gap: 16px;}
+  .stat-card { padding: 13px 7px; }
+  .category-section { padding: 10px 5px 7px 8px;}
+  .cat-label { min-width: 80px;}
+}
+@media (max-width: 600px) {
+  .section-title, .title-content h2 { font-size: 1.1rem; }
+  .cat-label { min-width: 52px; font-size: 0.92rem;}
+  .stats-content { padding: 5px 2px; }
+}
+  `}</style>
+            </div>
+
+
+            
 
           {/* === SMART ASSESSMENT MODAL === */}
           {assessmentOpen && (
@@ -1513,14 +3135,17 @@ function DashboardCSS() {
   --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 12px 40px rgba(0, 0, 0, 0.12);
-  
+
   /* Spacing */
   --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  
+  --spacing-sm: 10px;
+  --spacing-md: 18px;
+  --spacing-lg: 30px;
+  --spacing-xl: 44px;
+
+  /* Section/Gaps */
+  --section-gap: 34px;
+
   /* Border Radius */
   --radius-sm: 6px;
   --radius-md: 12px;
@@ -1550,7 +3175,6 @@ body, #root, .dashboard-root {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ========== LAYOUT COMPONENTS ========== */
 .dashboard-root {
   display: flex;
   height: 100vh;
@@ -1579,6 +3203,57 @@ body, #root, .dashboard-root {
   overflow-y: auto;
   scroll-behavior: smooth;
 }
+
+@media (max-width: 1200px) {
+  .homepage-content {
+    padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md) var(--spacing-lg);
+  }
+}
+@media (max-width: 900px) {
+  .homepage-content {
+    padding: var(--spacing-md) 4vw var(--spacing-sm) 4vw;
+  }
+}
+@media (max-width: 600px) {
+  .homepage-content {
+    padding: var(--spacing-md) 3vw var(--spacing-sm) 3vw;
+  }
+}
+
+
+/* ========== SECTION SPACING/ALIGNMENT ========== */
+.dashboard-grid,
+.full-width-chart-section,
+.full-width-section {
+  margin-bottom: var(--section-gap);
+}
+
+/* Remove gap after last dashboard section */
+.dashboard-grid:last-child,
+.full-width-chart-section:last-child,
+.full-width-section:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* If you stack several full-width-sections, keep spacing between */
+.full-width-chart-section + .full-width-chart-section,
+.full-width-section + .full-width-section {
+  margin-top: var(--section-gap);
+}
+
+/* Add consistent vertical rhythm above AND below full-width sections */
+.dashboard-grid + .full-width-chart-section,
+.dashboard-section + .full-width-chart-section,
+.full-width-chart-section + .dashboard-grid,
+.full-width-section + .dashboard-grid,
+.dashboard-section + .full-width-section {
+  margin-top: var(--section-gap);
+}
+.full-width-chart-section + .dashboard-section,
+.full-width-section + .dashboard-section {
+  margin-top: var(--section-gap);
+}
+
 
 /* ========== HEADER COMPONENTS ========== */
 .user-header-flex {
@@ -1690,20 +3365,22 @@ body, #root, .dashboard-root {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-xl);
 }
 
+/* ========== CARDS/SECTIONS ========== */
 .dashboard-section {
   background: var(--card-bg);
   box-shadow: var(--shadow-md);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md) var(--spacing-lg);
-  border: 1px solid var(--border-color);
-  margin-bottom: 0;
   min-width: 0;
   overflow: hidden;
   transition: var(--transition-bounce);
   position: relative;
+}
+
+.dashboard-section:not(:last-child) {
+  margin-bottom: var(--spacing-lg);
 }
 
 .dashboard-section:hover {
@@ -1739,7 +3416,7 @@ body, #root, .dashboard-root {
   color: var(--primary-blue);
 }
 
-/* ========== CHART SECTIONS ========== */
+/* ========== CHART SECTIONS (For legacy) ========== */
 .chart-card,
 .monthly-stats-card,
 .daily-trends-card,
@@ -1752,6 +3429,13 @@ body, #root, .dashboard-root {
   transition: var(--transition-bounce);
   overflow: hidden;
   position: relative;
+}
+
+.chart-card:not(:last-child),
+.monthly-stats-card:not(:last-child),
+.daily-trends-card:not(:last-child),
+.chart-section:not(:last-child) {
+  margin-bottom: var(--section-gap);
 }
 
 .chart-card:hover,
@@ -1771,6 +3455,19 @@ body, #root, .dashboard-root {
   right: 0;
   height: 6px;
   background: linear-gradient(90deg, var(--primary-blue) 0%, var(--success-green) 100%);
+}
+
+/* ========== FULL WIDTH CHART SECTION ========== */
+.full-width-chart-section {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  background: var(--main-bg, #fafbfc);
+  padding: 0;
+  margin-bottom: var(--section-gap);
+}
+.full-width-chart-section:last-child {
+  margin-bottom: 0;
 }
 
 /* ========== LOADING & ERROR STATES ========== */
@@ -1799,14 +3496,8 @@ body, #root, .dashboard-root {
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.homepage-error {
-  color: var(--danger-red);
-}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.homepage-error { color: var(--danger-red); }
 
 /* ========== RESPONSIVE DESIGN ========== */
 @media (max-width: 1400px) {
@@ -1821,22 +3512,12 @@ body, #root, .dashboard-root {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-lg);
   }
-  
-  .homepage-content {
-    padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md) var(--spacing-lg);
-  }
 }
-
 @media (max-width: 900px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
     gap: var(--spacing-md);
   }
-  
-  .homepage-content {
-    padding: var(--spacing-md) 4vw var(--spacing-sm) 4vw;
-  }
-  
   .user-header-flex {
     flex-direction: column;
     align-items: flex-start;
@@ -1845,47 +3526,44 @@ body, #root, .dashboard-root {
     padding: var(--spacing-md);
   }
 }
-
 @media (max-width: 600px) {
-  .homepage-content {
-    padding: var(--spacing-md) 3vw var(--spacing-sm) 3vw;
-  }
-  
   .dashboard-section {
     padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm) var(--spacing-md);
   }
-  
   .profile-pic-bg {
     min-width: 44px;
     min-height: 44px;
     width: 44px;
     height: 44px;
   }
-  
   .user-header-flex {
     margin-bottom: var(--spacing-sm);
     padding: var(--spacing-sm);
   }
-  
   .greeting-line {
     font-size: 1.2rem;
   }
-  
   .sub-line {
     font-size: 1rem;
   }
 }
-
 @media (max-width: 480px) {
   .dashboard-grid {
     gap: var(--spacing-sm);
   }
-  
   .chart-card,
   .monthly-stats-card,
   .daily-trends-card {
     margin: 0 -var(--spacing-sm);
   }
+}
+
+/* ========== SECTION VERTICAL GAP FIXES ========== */
+.dashboard-grid + .full-width-chart-section,
+.full-width-chart-section + .dashboard-grid,
+.full-width-chart-section + .full-width-section,
+.dashboard-grid + .full-width-section {
+  margin-top: var(--section-gap);
 }
 
 /* ========== ACCESSIBILITY ========== */
@@ -1896,7 +3574,6 @@ body, #root, .dashboard-root {
     transition-duration: 0.01ms !important;
   }
 }
-
 @media (prefers-color-scheme: dark) {
   :root {
     --main-bg: #111827;
@@ -1909,27 +3586,15 @@ body, #root, .dashboard-root {
     --text-muted: #9ca3af;
   }
 }
-
 /* ========== SCROLL BAR STYLING ========== */
-.homepage-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.homepage-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.homepage-content::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
-}
-
-.homepage-content::-webkit-scrollbar-thumb:hover {
-  background: var(--border-hover);
-}
-`}</style>
+.homepage-content::-webkit-scrollbar { width: 6px; }
+.homepage-content::-webkit-scrollbar-track { background: transparent; }
+.homepage-content::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px;}
+.homepage-content::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+  `}</style>
   );
 }
+
 
 function SmartAssessmentCSS() {
   return (
@@ -2369,6 +4034,7 @@ function SmartAssessmentCSS() {
     display: none;
   }
 }
+  
 `}</style>
   );
 }

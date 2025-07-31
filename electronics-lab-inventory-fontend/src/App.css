@@ -1,3 +1,4 @@
+/* src/App.css */
 /* Root variables for easy theming */
 :root {
   --primary: #667eea;
@@ -27,11 +28,17 @@ body, html, #root { height: 100%; margin: 0; padding: 0; background: var(--bg-li
   min-width: 200px;
   background: var(--bg-white);
   border-right: 1px solid var(--border-light);
-  min-height: 100vh;
+  min-height: 100vh; /* Keep min-height for initial sizing */
   box-shadow: 0 1px 6px var(--shadow-light);
   z-index: 5;
   display: flex;
   flex-direction: column;
+  /* NEW: Add position sticky to make it stay in view */
+  position: -webkit-sticky; /* For Safari support */
+  position: sticky;
+  top: 0; /* Stick to the top of the viewport */
+  align-self: flex-start; /* Ensure it aligns to the start in the flex container */
+  overflow-y: auto; /* Allow sidebar content to scroll internally if it gets too long */
 }
 
 .main-area-with-right-sidebar {
@@ -42,7 +49,7 @@ body, html, #root { height: 100%; margin: 0; padding: 0; background: var(--bg-li
   box-sizing: border-box;
   min-width: 0;
   min-height: 0;
-  padding: 30px 32px 24px 32px;
+  padding: 0; /* As discussed, removed direct padding here */
 }
 
 .dashboard-page, .dashboard-content {
@@ -61,6 +68,12 @@ body, html, #root { height: 100%; margin: 0; padding: 0; background: var(--bg-li
   box-shadow: -1px 0 4px var(--shadow-light);
   padding: 28px 18px;
   font-size: 0.98rem;
+  /* If you also want right sidebar to be sticky */
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  overflow-y: auto;
 }
 
 .navbar {
@@ -72,7 +85,7 @@ body, html, #root { height: 100%; margin: 0; padding: 0; background: var(--bg-li
   align-items: center;
   padding: 0 30px;
   box-shadow: 0 0.5px 8px var(--shadow-light);
-  position: sticky;
+  position: sticky; /* Keep navbar sticky at the top of its container */
   top: 0;
   z-index: 10;
 }

@@ -71,6 +71,15 @@ const transactionLogSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
     required: true
+  },
+  // NEW FIELD ADDED HERE
+  transactionStatus: {
+    type: String,
+    enum: {
+      values: ['Pending', 'Completed', 'Rejected', 'Cancelled'],
+      message: 'Transaction status must be one of: Pending, Completed, Rejected, Cancelled'
+    },
+    default: 'Completed' // Most stock movements are immediately completed
   }
 }, {
   timestamps: true
@@ -92,6 +101,7 @@ transactionLogSchema.index({ transactionDate: -1 });
 transactionLogSchema.index({ createdAt: -1 });
 transactionLogSchema.index({ componentId: 1, operationType: 1 });
 transactionLogSchema.index({ componentId: 1, transactionDate: -1 });
+transactionLogSchema.index({ transactionStatus: 1 }); // New index for the new field
 
 // Pre-save middleware to calculate total cost
 transactionLogSchema.pre('save', function(next) {
@@ -148,7 +158,7 @@ transactionLogSchema.statics.getUserHistory = function(userId, limit = 50) {
 
 // Static: Pending approvals
 transactionLogSchema.statics.getPendingApprovals = function() {
-  return this.find({ 
+  return this.find({
     approvedBy: { $exists: false },
     operationType: 'outward',
     quantity: { $gte: 100 }

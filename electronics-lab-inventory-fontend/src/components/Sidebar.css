@@ -1,6 +1,6 @@
 /* src/components/Sidebar.css */
 .sidebar {
-    width: 250px; /* Fixed width as seen in Figma  */
+    width: 280px !important;/* Fixed width as seen in Figma  */
     background-color: var(--bg-white);
     padding: 20px;
     box-shadow: 2px 0 5px var(--shadow-light);

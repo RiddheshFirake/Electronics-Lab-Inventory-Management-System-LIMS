@@ -44,11 +44,11 @@ body {
 
 .main-content-area {
     flex-grow: 1;
-    padding: 20px;
+    padding: 0;
     background-color: var(--bg-white); /* Main content background */
     border-radius: 8px; /* Slight rounding for the main area if desired */
     box-shadow: 0 2px 4px var(--shadow-light);
-    margin: 20px; /* Space around the main content area */
+    margin: 0; /* Space around the main content area */
 }
 
 /* Adjustments for responsiveness will be handled later with media queries */

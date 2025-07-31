@@ -304,7 +304,8 @@ exports.inwardStock = async (req, res) => {
       notes,
       batchNumber,
       supplierInvoice,
-      unitCost
+      unitCost,
+      transactionStatus: 'Completed' // NEW: Set status for inward
     };
 
     const transaction = await TransactionLog.create(transactionData);
@@ -398,7 +399,8 @@ exports.outwardStock = async (req, res) => {
       quantityAfter: newQuantity,
       reasonOrProject,
       notes,
-      approvedBy: needsApproval ? (approvedBy || req.user.id) : undefined
+      approvedBy: needsApproval ? (approvedBy || req.user.id) : undefined,
+      transactionStatus: 'Completed' // NEW: Set status for outward
     };
 
     const transaction = await TransactionLog.create(transactionData);
@@ -643,7 +645,7 @@ exports.bulkImportComponents = async (req, res) => {
 
     for (let i = 0; i < components.length; i++) {
       const componentData = components[i];
-      
+
       try {
         // Add metadata
         componentData.addedBy = req.user.id;
@@ -746,7 +748,7 @@ exports.getPredefinedCategories = async (req, res) => {
   try {
     const predefinedCategories = [
       'Resistors',
-      'Capacitors', 
+      'Capacitors',
       'Inductors',
       'Diodes',
       'Transistors',
