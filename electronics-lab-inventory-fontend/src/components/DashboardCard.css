@@ -1,0 +1,46 @@
+/* src/components/DashboardCard.css */
+.dashboard-card {
+    background-color: var(--bg-white);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 5px var(--shadow-light);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1; /* Allows cards to share space in a grid */
+    min-width: 220px; /* Minimum width before wrapping */
+}
+
+.card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.8em;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    font-size: 0.9em;
+    color: var(--text-light);
+    margin-bottom: 5px;
+}
+
+.card-value {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.card-trend {
+    font-size: 0.8em;
+    font-weight: 500;
+    margin-top: 5px;
+}

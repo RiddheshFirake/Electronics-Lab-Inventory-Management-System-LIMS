@@ -1,0 +1,97 @@
+/* src/pages/RegisterPage.css */
+.register-page-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--bg-light); /* Matches overall app background */
+    width: 100%; /* Take full width */
+}
+
+.register-card {
+    background-color: var(--bg-white);
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px var(--shadow-light);
+    width: 100%;
+    max-width: 450px; /* Slightly wider for more fields */
+    text-align: center;
+}
+
+.register-card h2 {
+    margin-bottom: 30px;
+    color: var(--primary-blue);
+    font-size: 1.8em;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 1em;
+    color: var(--text-dark);
+    background-color: #f8f9fa;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+}
+
+.register-button {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.register-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.error-message {
+    color: #dc3545; /* Red for error messages */
+    margin-bottom: 20px;
+    font-size: 0.9em;
+}
+
+.success-message {
+    color: #28a745; /* Green for success messages */
+    margin-bottom: 20px;
+    font-size: 0.9em;
+}
+
+.login-link-text {
+    margin-top: 25px;
+    color: var(--text-light);
+}
+
+.login-link-text a {
+    color: var(--primary-blue);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-link-text a:hover {
+    text-decoration: underline;
+}

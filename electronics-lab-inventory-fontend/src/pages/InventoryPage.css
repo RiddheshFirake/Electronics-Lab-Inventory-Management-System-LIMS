@@ -1,0 +1,424 @@
+/* src/pages/InventoryPage.css */
+
+.inventory-page {
+    flex-grow: 1; /* Allows it to expand and fill available space */
+    display: flex;
+    flex-direction: column; /* Stacks children vertically */
+    background-color: var(--bg-light); /* Light background for the overall page */
+    min-height: 100vh; /* Ensure it takes full viewport height */
+}
+
+.inventory-content {
+    flex-grow: 1; /* Allows content area to fill remaining vertical space */
+    padding: 20px;
+    background-color: var(--bg-white); /* White background for the main content block */
+    border-radius: 8px; /* Rounded corners for the content block */
+    box-shadow: 0 2px 4px var(--shadow-light); /* Subtle shadow for depth */
+    margin: 20px; /* Margin around the main content block */
+    display: flex;
+    flex-direction: column; /* Stack elements inside vertically */
+    gap: 20px; /* Spacing between sections/elements within the content */
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap; /* Allow header items to wrap on smaller screens */
+    gap: 15px; /* Space between header items when wrapped */
+}
+
+.inventory-header .page-title {
+    font-size: 1.8em;
+    color: var(--text-dark);
+    font-weight: 600;
+    margin: 0; /* Reset margin from default h1 styles */
+}
+
+.inventory-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap; /* Allow buttons to wrap */
+    justify-content: flex-end; /* Align buttons to the right */
+}
+
+.btn {
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: var(--primary-blue);
+    color: white;
+    border: 1px solid var(--primary-blue);
+}
+
+.btn-primary:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    border-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: white;
+    color: var(--primary-blue);
+    border: 1px solid var(--primary-blue);
+}
+
+.btn-secondary:hover {
+    background-color: var(--light-blue);
+    color: #0056b3; /* Darker blue text on hover */
+}
+
+/* Filter Bar */
+.filter-bar {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-light);
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.filter-bar .search-input-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 8px 15px;
+    background-color: #f8f9fa;
+    flex-grow: 1; /* Take available space */
+    max-width: 350px; /* Max width for search input */
+}
+
+.filter-bar .search-icon {
+    color: var(--text-light);
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.filter-bar input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 1em;
+    width: 100%;
+    color: var(--text-dark);
+}
+
+.filter-bar input::placeholder {
+    color: var(--text-light);
+}
+
+.filter-bar select {
+    padding: 8px 15px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    font-size: 1em;
+    color: var(--text-dark);
+    cursor: pointer;
+    min-width: 150px; /* Ensure select boxes have a minimum width */
+}
+
+.filter-bar .quantity-input {
+    width: 100px; /* Fixed width for quantity inputs */
+    text-align: center;
+}
+
+.filter-bar .checkbox-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dark);
+    font-size: 0.95em;
+    cursor: pointer;
+}
+
+.filter-bar .checkbox-filter input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-blue); /* Modern checkbox color */
+    cursor: pointer;
+}
+
+/* Component Table */
+.component-list-container {
+    overflow-x: auto; /* Enable horizontal scrolling for narrow screens */
+    flex-grow: 1; /* Allows table container to grow */
+}
+
+.component-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px; /* Ensure table doesn't get too squished on smaller desktop */
+}
+
+.component-table th,
+.component-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.component-table th {
+    background-color: var(--light-blue);
+    color: var(--primary-blue);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85em;
+    cursor: pointer; /* Indicate sortable columns */
+}
+
+.component-table tbody tr:hover {
+    background-color: #f0f8ff; /* Light hover effect */
+}
+
+.low-stock-row {
+    background-color: #ffebeb; /* Lighter red background for low stock */
+}
+
+.low-stock-badge, .old-stock-badge {
+    background-color: #dc3545; /* Red for low stock */
+    color: white;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 0.7em;
+    margin-left: 8px;
+    font-weight: 600;
+    vertical-align: middle;
+    display: inline-block; /* Allows badges to sit nicely next to text */
+}
+
+.old-stock-badge {
+    background-color: #ffc107; /* Yellow for old stock */
+    color: var(--text-dark); /* Dark text for contrast on yellow */
+}
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap; /* Allow action buttons to wrap if too many */
+}
+
+.icon-btn {
+    background: none;
+    border: 1px solid transparent; /* Transparent border for consistent sizing */
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 8px;
+    border-radius: 8px; /* Rounded corners for icon buttons */
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    display: flex; /* To center icon */
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-btn { color: #007bff; } /* Blue */
+.inward-btn { color: #28a745; } /* Green */
+.outward-btn { color: #ffc107; } /* Yellow/Orange */
+.delete-btn { color: #dc3545; } /* Red */
+
+.icon-btn:hover {
+    background-color: var(--light-blue);
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+}
+
+.delete-btn:hover {
+    background-color: #ffebeb; /* Light red hover for delete */
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.no-components-message {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-light);
+    font-size: 1.1em;
+    background-color: #f8f8f8;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-light);
+}
+
+.pagination button {
+    padding: 8px 15px;
+    border: 1px solid var(--primary-blue);
+    border-radius: 8px;
+    background-color: var(--primary-blue);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    font-weight: 500;
+}
+
+.pagination button:disabled {
+    background-color: #cccccc;
+    border-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.pagination button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.pagination span {
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.pagination select {
+    padding: 8px 15px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    font-size: 1em;
+    color: var(--text-dark);
+    cursor: pointer;
+}
+
+/* Notification bar */
+.app-notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 500;
+    color: white;
+    z-index: 1001;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    animation: slideInFromTop 0.3s ease-out, fadeOut 0.5s ease-out 2.5s forwards;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 250px;
+    justify-content: center;
+}
+
+.app-notification.success {
+    background-color: var(--success-green);
+    border: 1px solid var(--success-green-dark);
+}
+
+.app-notification.error {
+    background-color: var(--danger-red);
+    border: 1px solid var(--danger-red-dark);
+}
+
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* Optional: Hint text for modals (also used in other modal css) */
+.hint-text {
+    font-size: 0.85em;
+    color: var(--text-light);
+    margin-top: 5px;
+    line-height: 1.3;
+}
+
+.approval-hint {
+    color: var(--warning-orange);
+    font-weight: 500;
+}
+
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+    .component-table {
+        min-width: 700px; /* Adjust min-width for medium screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .inventory-content {
+        margin: 10px; /* Reduce margin on smaller screens */
+        padding: 15px; /* Reduce padding */
+    }
+
+    .inventory-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .inventory-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .inventory-actions .btn {
+        width: 100%; /* Make buttons full width */
+        justify-content: center;
+    }
+
+    .filter-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .filter-bar .search-input-group,
+    .filter-bar select,
+    .filter-bar input[type="text"],
+    .filter-bar input[type="number"] {
+        width: 100%;
+        max-width: unset; /* Remove max-width for full width */
+    }
+
+    .component-table {
+        min-width: unset; /* Allow table to shrink, rely on overflow-x */
+    }
+
+    .action-buttons {
+        flex-wrap: wrap; /* Allow action buttons to wrap */
+        justify-content: center;
+    }
+
+    .pagination {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pagination button,
+    .pagination select {
+        width: 100%;
+        justify-content: center;
+    }
+}

@@ -1,0 +1,115 @@
+/* src/components/RightSidebarSection.css */
+.right-sidebar {
+    width: 300px; /* Fixed width for the right sidebar */
+    padding: 20px;
+    background-color: var(--bg-light); /* Slightly different background for clarity */
+    box-shadow: -2px 0 5px var(--shadow-light);
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Space between sections */
+    min-height: 100vh;
+}
+
+.right-sidebar-section {
+    background-color: var(--bg-white);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 5px var(--shadow-light);
+}
+
+.right-sidebar-section h3 {
+    font-size: 1.1em;
+    color: var(--text-dark);
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 10px;
+}
+
+/* Quick Actions Specific */
+.action-list {
+    list-style: none;
+    padding: 0;
+}
+
+.action-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 0.95em;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.action-item:hover {
+    color: var(--primary-blue);
+}
+
+.action-item svg {
+    margin-right: 10px;
+    font-size: 1.2em;
+    color: var(--text-light); /* Default icon color */
+}
+
+.action-item:hover svg {
+    color: var(--primary-blue); /* Icon color on hover */
+}
+
+.action-item .shortcut {
+    margin-left: auto;
+    color: var(--text-light);
+    font-size: 0.85em;
+}
+
+/* Recent Activity Specific */
+.activity-list {
+    list-style: none;
+    padding: 0;
+}
+
+.activity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #f0f0f0; /* Subtle separator */
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-details {
+    flex-grow: 1;
+    display: flex;
+    gap: 5px;
+    align-items: baseline;
+}
+
+.activity-type {
+    font-weight: 600;
+    color: var(--primary-blue);
+}
+.activity-type.sold {
+    color: #dc3545; /* Red for sold */
+}
+.activity-type.restocked {
+    color: #28a745; /* Green for restocked */
+}
+
+
+.activity-count {
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.activity-item-name {
+    color: var(--text-light);
+    font-size: 0.9em;
+}
+
+.activity-time {
+    font-size: 0.8em;
+    color: var(--text-light);
+    margin-left: 10px;
+}

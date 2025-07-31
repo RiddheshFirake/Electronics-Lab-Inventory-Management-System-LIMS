@@ -3,47 +3,51 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
-// Generate JWT Token
+// Generate JWT Token with default 7 days
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '30d',
+    expiresIn: process.env.JWT_EXPIRE || '7d',
   });
 };
 
-// Send token response
+// Send token response (cookie optional — adjust per your frontend strategy)
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user._id);
 
   const options = {
     expires: new Date(
-      Date.now() + (parseInt(process.env.JWT_COOKIE_EXPIRE) || 30) * 24 * 60 * 60 * 1000
+      Date.now() + (parseInt(process.env.JWT_COOKIE_EXPIRE, 10) || 7) * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
+    sameSite: 'lax',
   };
 
   if (process.env.NODE_ENV === 'production') {
     options.secure = true;
   }
 
-  res.status(statusCode).cookie('token', token, options).json({
-    success: true,
-    token,
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      department: user.department,
-      employeeId: user.employeeId,
-      isActive: user.isActive,
-      displayName: user.displayName
-    },
-  });
+  // Send token in cookie and JSON response
+  res.status(statusCode)
+    .cookie('token', token, options)
+    .json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        employeeId: user.employeeId,
+        isActive: user.isActive,
+        displayName: user.displayName,
+      },
+    });
 };
 
 // @desc    Register user
 // @route   POST /api/auth/register
-// @access  Public (but requires admin for certain roles)
+// @access  Public (some roles restricted by middleware)
 exports.register = async (req, res) => {
   try {
     const { name, email, password, role, employeeId, department } = req.body;
@@ -53,26 +57,26 @@ exports.register = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User with that email already exists'
+        message: 'User with that email already exists',
       });
     }
 
     // Validate password length
-    if (password.length < 6) {
+    if (!password || password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters'
+        message: 'Password must be at least 6 characters',
       });
     }
 
-    // Create user
+    // Create user instance
     const user = new User({
       name,
       email,
       password,
       role: role || 'User',
       employeeId,
-      department
+      department,
     });
 
     await user.save();
@@ -83,7 +87,7 @@ exports.register = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error during registration',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -95,21 +99,21 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate email & password
+    // Validate email & password presence
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide an email and password'
+        message: 'Please provide an email and password',
       });
     }
 
-    // Check for user (include password in selection)
+    // Fetch user with password
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid credentials',
       });
     }
 
@@ -117,21 +121,21 @@ exports.login = async (req, res) => {
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
-        message: 'Your account has been deactivated. Please contact administrator.'
+        message: 'Your account has been deactivated. Please contact administrator.',
       });
     }
 
-    // Check if password matches
+    // Verify password
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid credentials',
       });
     }
 
-    // Update last login
+    // Update last login date
     user.lastLogin = new Date();
     await user.save();
 
@@ -141,7 +145,7 @@ exports.login = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error during login',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -153,11 +157,12 @@ exports.logout = async (req, res) => {
   res.cookie('token', 'none', {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
+    sameSite: 'lax',
   });
 
   res.status(200).json({
     success: true,
-    message: 'User logged out successfully'
+    message: 'User logged out successfully',
   });
 };
 
@@ -166,18 +171,19 @@ exports.logout = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    // Fetch user by ID available in req.user set by auth middleware
+    const user = await User.findById(req.user.id).select('-password -resetPasswordToken -resetPasswordExpire');
 
     res.status(200).json({
       success: true,
-      data: user
+      data: user,
     });
   } catch (error) {
     console.error('Get me error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -191,35 +197,31 @@ exports.updateDetails = async (req, res) => {
       name: req.body.name,
       email: req.body.email,
       department: req.body.department,
-      employeeId: req.body.employeeId
+      employeeId: req.body.employeeId,
     };
 
     // Remove undefined fields
-    Object.keys(fieldsToUpdate).forEach(key => {
+    Object.keys(fieldsToUpdate).forEach((key) => {
       if (fieldsToUpdate[key] === undefined) {
         delete fieldsToUpdate[key];
       }
     });
 
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      fieldsToUpdate,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+      new: true,
+      runValidators: true,
+    }).select('-password -resetPasswordToken -resetPasswordExpire');
 
     res.status(200).json({
       success: true,
-      data: user
+      data: user,
     });
   } catch (error) {
     console.error('Update details error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -231,19 +233,19 @@ exports.updatePassword = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('+password');
 
-    // Check current password
+    // Verify current password
     if (!(await user.matchPassword(req.body.currentPassword))) {
       return res.status(401).json({
         success: false,
-        message: 'Password is incorrect'
+        message: 'Password is incorrect',
       });
     }
 
-    // Validate new password
-    if (req.body.newPassword.length < 6) {
+    // Validate new password length
+    if (!req.body.newPassword || req.body.newPassword.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'New password must be at least 6 characters'
+        message: 'New password must be at least 6 characters',
       });
     }
 
@@ -256,12 +258,12 @@ exports.updatePassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-// @desc    Forgot password
+// @desc    Forgot password - generate and send reset token
 // @route   POST /api/auth/forgotpassword
 // @access  Public
 exports.forgotPassword = async (req, res) => {
@@ -271,57 +273,55 @@ exports.forgotPassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'There is no user with that email'
+        message: 'There is no user with that email',
       });
     }
 
-    // Get reset token
+    // Generate reset token
     const resetToken = crypto.randomBytes(20).toString('hex');
 
-    // Hash token and set to resetPasswordToken field
-    user.resetPasswordToken = crypto
-      .createHash('sha256')
-      .update(resetToken)
-      .digest('hex');
+    // Hash token and set to user
+    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-    // Set expire
-    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    // Token expires in 10 minutes
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
 
     await user.save({ validateBeforeSave: false });
 
-    // Create reset url
-    const resetUrl = `${req.protocol}://${req.get(
-      'host'
-    )}/api/auth/resetpassword/${resetToken}`;
+    // Construct reset URL (for example, frontend handles route)
+    const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/resetpassword/${resetToken}`;
 
-    const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
+    // Email message placeholder (set up nodemailer in your app)
+    const message = `You are receiving this email because you (or someone else) requested the reset of a password. Please make a PUT request to:\n\n${resetUrl}`;
 
     try {
-      // Here you would send email using nodemailer
-      // For now, we'll just return the reset token in development
+      // TODO: send email using nodemailer here
       if (process.env.NODE_ENV === 'development') {
+        // For dev/testing, return reset token and URL in response
         return res.status(200).json({
           success: true,
           message: 'Password reset token generated',
           resetToken,
-          resetUrl
+          resetUrl,
         });
       }
 
+      // In production, just return success assuming mail sent
       res.status(200).json({
         success: true,
-        message: 'Email sent'
+        message: 'Email sent',
       });
     } catch (err) {
-      console.log(err);
+      console.error('Forgot password email error:', err);
+
+      // Clear reset token/expire on failure
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
-
       await user.save({ validateBeforeSave: false });
 
       return res.status(500).json({
         success: false,
-        message: 'Email could not be sent'
+        message: 'Email could not be sent',
       });
     }
   } catch (error) {
@@ -329,7 +329,7 @@ exports.forgotPassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -339,12 +339,10 @@ exports.forgotPassword = async (req, res) => {
 // @access  Public
 exports.resetPassword = async (req, res) => {
   try {
-    // Get hashed token
-    const resetPasswordToken = crypto
-      .createHash('sha256')
-      .update(req.params.resettoken)
-      .digest('hex');
+    // Hash the reset token from params
+    const resetPasswordToken = crypto.createHash('sha256').update(req.params.resettoken).digest('hex');
 
+    // Find user with matching token and non-expired
     const user = await User.findOne({
       resetPasswordToken,
       resetPasswordExpire: { $gt: Date.now() },
@@ -353,22 +351,23 @@ exports.resetPassword = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid token'
+        message: 'Invalid or expired password reset token',
       });
     }
 
-    // Validate new password
-    if (req.body.password.length < 6) {
+    // Validate new password length
+    if (!req.body.password || req.body.password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters'
+        message: 'Password must be at least 6 characters',
       });
     }
 
-    // Set new password
+    // Save new password and clear reset token/expire
     user.password = req.body.password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
+
     await user.save();
 
     sendTokenResponse(user, 200, res);
@@ -377,7 +376,7 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -391,27 +390,24 @@ exports.getUsers = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 10;
     const startIndex = (page - 1) * limit;
 
-    // Build query
+    // Build query filters
     let query = {};
-    
-    // Filter by role
+
     if (req.query.role && req.query.role !== 'all') {
       query.role = req.query.role;
     }
 
-    // Filter by status
     if (req.query.status === 'active') {
       query.isActive = true;
     } else if (req.query.status === 'inactive') {
       query.isActive = false;
     }
 
-    // Search by name or email
     if (req.query.search) {
       query.$or = [
         { name: { $regex: req.query.search, $options: 'i' } },
         { email: { $regex: req.query.search, $options: 'i' } },
-        { employeeId: { $regex: req.query.search, $options: 'i' } }
+        { employeeId: { $regex: req.query.search, $options: 'i' } },
       ];
     }
 
@@ -419,14 +415,14 @@ exports.getUsers = async (req, res) => {
     const users = await User.find(query)
       .sort({ createdAt: -1 })
       .limit(limit)
-      .skip(startIndex);
+      .skip(startIndex)
+      .select('-password -resetPasswordToken -resetPasswordExpire');
 
-    // Pagination result
     const pagination = {
       current: page,
-      total: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / limit),
       count: users.length,
-      totalCount: total
+      totalCount: total,
     };
 
     res.status(200).json({
@@ -434,14 +430,14 @@ exports.getUsers = async (req, res) => {
       count: users.length,
       total,
       pagination,
-      data: users
+      data: users,
     });
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -451,25 +447,25 @@ exports.getUsers = async (req, res) => {
 // @access  Private/Admin
 exports.getUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id).select('-password -resetPasswordToken -resetPasswordExpire');
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
     }
 
     res.status(200).json({
       success: true,
-      data: user
+      data: user,
     });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -483,14 +479,14 @@ exports.createUser = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: user
+      data: user,
     });
   } catch (error) {
     console.error('Create user error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -503,30 +499,31 @@ exports.updateUser = async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
+      select: '-password -resetPasswordToken -resetPasswordExpire',
     });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
     }
 
     res.status(200).json({
       success: true,
-      data: user
+      data: user,
     });
   } catch (error) {
     console.error('Update user error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message
+      error: error.message,
     });
   }
 };
 
-// @desc    Delete user (Admin only)
+// @desc    Delete user (Soft delete - Admin only)
 // @route   DELETE /api/auth/users/:id
 // @access  Private/Admin
 exports.deleteUser = async (req, res) => {
@@ -536,24 +533,24 @@ exports.deleteUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
     }
 
-    // Soft delete - deactivate user instead of removing
+    // Soft delete - deactivate user instead of removal
     user.isActive = false;
     await user.save();
 
     res.status(200).json({
       success: true,
-      message: 'User deactivated successfully'
+      message: 'User deactivated successfully',
     });
   } catch (error) {
     console.error('Delete user error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message
+      error: error.message,
     });
   }
 };

@@ -1,13 +1,54 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary-blue: #007bff; /* Example, adjust to exact Figma blue */
+    --light-blue: #e0f2ff;   /* For active sidebar item */
+    --text-dark: #333;
+    --text-light: #666;
+    --bg-light: #f5f7fa;     /* General background */
+    --bg-white: #ffffff;
+    --border-light: #e0e0e0;
+    --shadow-light: rgba(0, 0, 0, 0.05);
+
+    /* Chart Colors - reference Figma for exact shades */
+    --chart-blue: #007bff;
+    --chart-green: #28a745;
+    --chart-pink: #ff69b4; /* Example, adjust */
+    --chart-purple: #8a2be2; /* Example, adjust */
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
+
+body {
+    font-family: 'Inter', sans-serif; /* A good clean sans-serif font */
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+#root {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Basic Layout */
+.app-container {
+    display: flex;
+    width: 100%;
+}
+
+.main-content-area {
+    flex-grow: 1;
+    padding: 20px;
+    background-color: var(--bg-white); /* Main content background */
+    border-radius: 8px; /* Slight rounding for the main area if desired */
+    box-shadow: 0 2px 4px var(--shadow-light);
+    margin: 20px; /* Space around the main content area */
+}
+
+/* Adjustments for responsiveness will be handled later with media queries */

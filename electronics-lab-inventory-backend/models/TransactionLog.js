@@ -76,14 +76,20 @@ const transactionLogSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes for faster queries
+// Aliased virtual for backward compatible population if needed
+transactionLogSchema.virtual('component', {
+  ref: 'Component',
+  localField: 'componentId',
+  foreignField: '_id',
+  justOne: true
+});
+
+// Indexes
 transactionLogSchema.index({ componentId: 1 });
 transactionLogSchema.index({ user: 1 });
 transactionLogSchema.index({ operationType: 1 });
 transactionLogSchema.index({ transactionDate: -1 });
 transactionLogSchema.index({ createdAt: -1 });
-
-// Compound indexes for common queries
 transactionLogSchema.index({ componentId: 1, operationType: 1 });
 transactionLogSchema.index({ componentId: 1, transactionDate: -1 });
 
@@ -95,44 +101,34 @@ transactionLogSchema.pre('save', function(next) {
   next();
 });
 
-// Static method to get monthly transaction summary
+// Static: Monthly stats
 transactionLogSchema.statics.getMonthlyStats = async function(year, month) {
   const startDate = new Date(year, month - 1, 1);
   const endDate = new Date(year, month, 0, 23, 59, 59);
 
   const stats = await this.aggregate([
-    {
-      $match: {
-        transactionDate: {
-          $gte: startDate,
-          $lte: endDate
-        }
-      }
-    },
-    {
-      $group: {
+    { $match: {
+        transactionDate: { $gte: startDate, $lte: endDate }
+    }},
+    { $group: {
         _id: '$operationType',
         totalQuantity: { $sum: '$quantity' },
         totalTransactions: { $sum: 1 },
         totalCost: { $sum: '$totalCost' },
         uniqueComponents: { $addToSet: '$componentId' }
-      }
-    },
-    {
-      $project: {
+    }},
+    { $project: {
         _id: 1,
         totalQuantity: 1,
         totalTransactions: 1,
         totalCost: 1,
         uniqueComponentsCount: { $size: '$uniqueComponents' }
-      }
-    }
+    }}
   ]);
-
   return stats;
 };
 
-// Static method to get component transaction history
+// Static: Component history
 transactionLogSchema.statics.getComponentHistory = function(componentId, limit = 50) {
   return this.find({ componentId })
     .populate('user', 'name email role')
@@ -141,7 +137,7 @@ transactionLogSchema.statics.getComponentHistory = function(componentId, limit =
     .limit(limit);
 };
 
-// Static method to get user transaction history
+// Static: User history
 transactionLogSchema.statics.getUserHistory = function(userId, limit = 50) {
   return this.find({ user: userId })
     .populate('componentId', 'componentName partNumber')
@@ -150,29 +146,28 @@ transactionLogSchema.statics.getUserHistory = function(userId, limit = 50) {
     .limit(limit);
 };
 
-// Static method to get transactions requiring approval
+// Static: Pending approvals
 transactionLogSchema.statics.getPendingApprovals = function() {
   return this.find({ 
     approvedBy: { $exists: false },
     operationType: 'outward',
-    quantity: { $gte: 100 } // Transactions with high quantities need approval
+    quantity: { $gte: 100 }
   })
     .populate('user', 'name email role')
     .populate('componentId', 'componentName partNumber')
     .sort({ createdAt: -1 });
 };
 
-// Virtual for transaction value
+// Virtual: transactionValue
 transactionLogSchema.virtual('transactionValue').get(function() {
   return this.totalCost || (this.unitCost * this.quantity) || 0;
 });
 
-// Virtual for checking if transaction needs approval
+// Virtual: needsApproval
 transactionLogSchema.virtual('needsApproval').get(function() {
   return this.operationType === 'outward' && this.quantity >= 100 && !this.approvedBy;
 });
 
-// Transform toJSON to include virtuals
 transactionLogSchema.set('toJSON', { virtuals: true });
 
 module.exports = mongoose.model('TransactionLog', transactionLogSchema);

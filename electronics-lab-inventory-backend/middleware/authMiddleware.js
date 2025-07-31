@@ -3,14 +3,16 @@ const User = require('../models/User');
 
 // Protect routes - check if user is authenticated
 const protect = async (req, res, next) => {
-  let token;
+  // Allow CORS preflight without auth
+  if (req.method === 'OPTIONS') return next();
 
-  // Check for token in headers
+  let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
   }
 
-  // Make sure token exists
   if (!token) {
     return res.status(401).json({
       success: false,
@@ -19,12 +21,9 @@ const protect = async (req, res, next) => {
   }
 
   try {
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Get user from database
     const user = await User.findById(decoded.id).select('-password');
-
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -39,29 +38,26 @@ const protect = async (req, res, next) => {
       });
     }
 
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
+    // (Recommended: move this to login route to avoid heavy DB writes)
+    // user.lastLogin = new Date();
+    // await user.save();
 
     req.user = user;
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
-    
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({
         success: false,
         message: 'Not authorized to access this route. Invalid token.'
       });
     }
-    
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
         message: 'Not authorized to access this route. Token has expired.'
       });
     }
-
     return res.status(401).json({
       success: false,
       message: 'Not authorized to access this route.'
@@ -69,19 +65,20 @@ const protect = async (req, res, next) => {
   }
 };
 
-// Optional authentication - doesn't fail if no token
 const optionalAuth = async (req, res, next) => {
-  let token;
+  if (req.method === 'OPTIONS') return next();
 
+  let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
   }
 
   if (token) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.id).select('-password');
-      
       if (user && user.isActive) {
         req.user = user;
       }

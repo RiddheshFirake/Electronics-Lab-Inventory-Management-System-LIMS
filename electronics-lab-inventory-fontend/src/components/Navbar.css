@@ -1,0 +1,126 @@
+/* src/components/Navbar.css */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: var(--bg-white);
+    border-bottom: 1px solid var(--border-light);
+    height: 70px; /* Consistent height */
+    box-shadow: 0 1px 3px var(--shadow-light);
+    border-radius: 8px; /* Matches the main content area */
+    margin-bottom: 20px; /* Space below the navbar */
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 8px 15px;
+    background-color: #f8f9fa;
+    flex-grow: 1; /* Allows it to take available space */
+    max-width: 400px; /* Limit its width */
+}
+
+.search-bar .search-icon {
+    color: var(--text-light);
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.search-bar input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 1em;
+    width: 100%;
+    color: var(--text-dark);
+}
+
+.search-bar input::placeholder {
+    color: var(--text-light);
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    margin-left: auto; /* Pushes right content to the far right */
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    margin-left: 30px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+}
+
+.user-profile:hover {
+    background-color: #f0f0f0;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+    object-fit: cover;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.user-name {
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.user-role {
+    font-size: 0.85em;
+    color: var(--text-light);
+}
+
+.dropdown-icon {
+    margin-left: 5px;
+    color: var(--text-light);
+}
+
+.notification-bell {
+    font-size: 1.5em;
+    color: var(--text-dark);
+    margin-left: 20px;
+    cursor: pointer;
+    position: relative; /* For badges */
+}
+
+.settings-dot-btn {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    margin-left: 15px;
+    color: var(--text-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 0.5;
+    padding: 5px;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+}
+
+.settings-dot-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.settings-dot-btn span {
+    display: block;
+    font-size: 0.5em; /* Smaller dots */
+}

@@ -3,111 +3,70 @@ const TransactionLog = require('../models/TransactionLog');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 
-// @desc    Get dashboard overview statistics
+// controllers/dashboardController.js
+
+// @desc    Get dashboard overview
 // @route   GET /api/dashboard/overview
-// @access  Private (Admin, Lab Technician, Manufacturing Engineer)
-exports.getDashboardOverview = async (req, res) => {
-  try {
-    // Get basic counts
-    const totalComponents = await Component.countDocuments({ status: 'Active' });
-    const totalUsers = await User.countDocuments({ isActive: true });
-    const lowStockComponents = await Component.countDocuments({
-      $expr: { $lte: ['$quantity', '$criticalLowThreshold'] },
-      status: 'Active'
-    });
+// @access  Private (canAccessDashboard)
+exports.getDashboardOverview = async (req, res, next) => {
+    try {
+        const totalComponents = await Component.countDocuments();
+        const totalQuantityResult = await Component.aggregate([
+            { $group: { _id: null, total: { $sum: '$quantity' } } }
+        ]);
+        const totalQuantity = totalQuantityResult.length > 0 ? totalQuantityResult[0].total : 0;
 
-    // Get old stock components (no outward movement in 3+ months)
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-    const oldStockComponents = await Component.countDocuments({
-      $or: [
-        { lastOutwardMovement: { $lt: threeMonthsAgo } },
-        { lastOutwardMovement: { $exists: false } }
-      ],
-      status: 'Active'
-    });
+        const lowStockCount = await Component.findLowStock().countDocuments();
+        const oldStockCount = await Component.findOldStock().countDocuments();
 
-    // Get total inventory value
-    const inventoryValue = await Component.aggregate([
-      { $match: { status: 'Active' } },
-      {
-        $group: {
-          _id: null,
-          totalValue: { $sum: { $multiply: ['$quantity', '$unitPrice'] } }
-        }
-      }
-    ]);
+        const totalInventoryValueAggregate = await Component.aggregate([
+            { $group: { _id: null, totalValue: { $sum: { $multiply: ['$quantity', '$unitPrice'] } } } }
+        ]);
+        const totalInventoryValue = totalInventoryValueAggregate.length > 0 ? totalInventoryValueAggregate[0].totalValue : 0;
 
-    // Get recent transactions count (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const recentTransactions = await TransactionLog.countDocuments({
-      createdAt: { $gte: thirtyDaysAgo }
-    });
+        // To get "Today's Sale" or "Total Inwarded Items":
+        // You need a specific aggregation for today's inward.
+        // For now, let's just use a placeholder or assume `totalInward`
+        // is a simple value from the overview data if it's meant to be.
 
-    // Get unread notifications count for current user
-    const unreadNotifications = await Notification.countDocuments({
-      $or: [
-        { recipient: req.user.id },
-        { recipientRole: req.user.role }
-      ],
-      isRead: false,
-      isArchived: false
-    });
+        // If "Today's Sale" means total quantity inwarded today:
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
 
-    // Get category distribution
-    const categoryDistribution = await Component.aggregate([
-      { $match: { status: 'Active' } },
-      {
-        $group: {
-          _id: '$category',
-          count: { $sum: 1 },
-          totalQuantity: { $sum: '$quantity' },
-          totalValue: { $sum: { $multiply: ['$quantity', '$unitPrice'] } }
-        }
-      },
-      { $sort: { count: -1 } },
-      { $limit: 10 }
-    ]);
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
 
-    // Get top locations by component count
-    const locationDistribution = await Component.aggregate([
-      { $match: { status: 'Active' } },
-      {
-        $group: {
-          _id: '$location',
-          count: { $sum: 1 },
-          totalQuantity: { $sum: '$quantity' }
-        }
-      },
-      { $sort: { count: -1 } },
-      { $limit: 10 }
-    ]);
+        const totalInwardTodayResult = await TransactionLog.aggregate([
+            {
+                $match: {
+                    operationType: 'inward',
+                    transactionDate: { $gte: startOfToday, $lte: endOfToday }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalInwardedQuantity: { $sum: '$quantity' }
+                }
+            }
+        ]);
+        const totalInwardToday = totalInwardTodayResult.length > 0 ? totalInwardTodayResult[0].totalInwardedQuantity : 0;
 
-    res.status(200).json({
-      success: true,
-      data: {
-        overview: {
-          totalComponents,
-          totalUsers,
-          lowStockComponents,
-          oldStockComponents,
-          inventoryValue: inventoryValue[0]?.totalValue || 0,
-          recentTransactions,
-          unreadNotifications
-        },
-        categoryDistribution,
-        locationDistribution
-      }
-    });
-  } catch (error) {
-    console.error('Get dashboard overview error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalComponents,
+                totalQuantity, // Ensure this is a number
+                lowStockCount,
+                oldStockCount,
+                totalInventoryValue: parseFloat(totalInventoryValue.toFixed(2)),
+                totalInward: totalInwardToday // This should be a number
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
 };
 
 // @desc    Get monthly transaction statistics
