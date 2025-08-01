@@ -5,11 +5,15 @@ import Sidebar from './components/Sidebar';
 import HomePage from './pages/HomePage';
 import InventoryPage from './pages/InventoryPage';
 import SalesOrdersPage from './pages/OrdersPage';
-import SuppliersPage from './pages/SuppliersPage';
+import PersonalAssistant from './pages/PersonalAssistantPage';
 import ReportsPage from './pages/ReportsPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage'; // Import the new page
 import PrivateRoute from './components/PrivateRoute';
+import UsersPage from './pages/UsersPage';
+import SettingsPage from './pages/SettingsPage';
+import HelpPage from './pages/HelpPage';
+import LandingPage from './pages/LandingPage';
 
 import './App.css';
 
@@ -18,41 +22,24 @@ function App() {
         <Router>
             <div className="app-container">
                 <Routes>
-                    {/* Public routes */}
+        {/* Public routes */}
+                    <Route path="/" element={<LandingPage />} />  {/* Landing page */}
                     <Route path="/login" element={<LoginPage />} />
-                    <Route path="/register" element={<RegisterPage />} /> {/* Add this line */}
-                    {/* Add forgot password routes here */}
+                    <Route path="/register" element={<RegisterPage />} />
 
                     {/* Protected routes */}
-                    <Route path="/*" element={<PrivateRoute />}>
-                        <Route index element={
-                            <div className="main-area-with-right-sidebar">
-                                <HomePage />
-                            </div>
-                        } />
-                        <Route path="inventory" element={
-                            <div className="main-area-with-right-sidebar">
-                                <InventoryPage />
-                            </div>
-                        } />
-                        <Route path="sales-orders" element={
-                            <div className="main-area-with-right-sidebar">
-                                <SalesOrdersPage />
-                            </div>
-                        } />
-                        <Route path="suppliers" element={
-                            <div className="main-area-with-right-sidebar">
-                                <SuppliersPage />
-                            </div>
-                        } />
-                        <Route path="reports" element={
-                            <div className="main-area-with-right-sidebar">
-                                <ReportsPage />
-                            </div>
-                        } />
-                        {/* Add other protected routes here */}
+                    <Route path="/app/*" element={<PrivateRoute />}>
+                        <Route index element={<HomePage />} />
+                        <Route path="inventory" element={<InventoryPage />} />
+                        <Route path="sales-orders" element={<SalesOrdersPage />} />
+                        <Route path="users" element={<UsersPage />} />
+                        <Route path="personal-assistant" element={<PersonalAssistant />} />
+                        <Route path="reports" element={<ReportsPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
+                        <Route path="help" element={<HelpPage />} />
                     </Route>
                 </Routes>
+
             </div>
         </Router>
     );

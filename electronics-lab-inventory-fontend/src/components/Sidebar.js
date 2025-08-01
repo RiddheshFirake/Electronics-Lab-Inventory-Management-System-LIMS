@@ -1,71 +1,84 @@
 // src/components/Sidebar.js
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react'; // Import useContext
 import { Link, useLocation } from 'react-router-dom';
 import {
     MdDashboard,
     MdInventory,
     MdShoppingCart,
-    MdPeople,
+    MdPeople, // Used for Suppliers, now for Users in user management
     MdReport,
     MdHelp,
     MdSettings,
     MdMenu,
-    MdClose
+    MdClose,
+    MdAdminPanelSettings // Icon for Admin/Users link
 } from 'react-icons/md';
 
 import wareviewLogo from '../assets/wareview-logo.png';
+import AuthContext from '../contexts/AuthContext'; // Import AuthContext
 
 const Sidebar = () => {
     const location = useLocation();
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const { user } = useContext(AuthContext); // Get user from AuthContext
 
     // Main navigation items
-    const navItems = [
+    let navItems = [ // Use `let` so we can conditionally add items
         {
             name: 'Dashboard',
             icon: <MdDashboard />,
-            path: '/',
-            color: '#667eea'
+            path: '/app',
+            color: '#667eea' // Corresponds to --primary
         },
         {
             name: 'Inventory',
             icon: <MdInventory />,
-            path: '/inventory',
-            color: '#3dc47e'
+            path: '/app/inventory',
+            color: '#3dc47e' // Corresponds to --success
         },
         {
             name: 'Orders',
             icon: <MdShoppingCart />,
-            path: '/sales-orders',
-            color: '#fd7e14'
+            path: '/app/sales-orders',
+            color: '#fd7e14' // Corresponds to --warning
         },
         {
-            name: 'Personal Assistant(to do)',
-            icon: <MdPeople />,
-            path: '/suppliers',
-            color: '#9f7aea'
+            name: 'Personal Assistant',
+            icon: <MdPeople />, // Changed from MdSmartToy as per previous usage in App.js mapping
+            path: '/app/personal-assistant',
+            color: '#9f7aea' // A purple accent
         },
         {
             name: 'Reports',
             icon: <MdReport />,
-            path: '/reports',
-            color: '#38b2ac'
+            path: '/app/reports',
+            color: '#38b2ac' // A teal accent
         },
     ];
+
+    // Add 'Users' link only if the logged-in user is an Admin
+    if (user && user.role === 'Admin') {
+        navItems.splice(3, 0, { // Insert at index 3 (before Personal Assistant)
+            name: 'Users',
+            icon: <MdAdminPanelSettings />, // Specific icon for Admin/Users
+            path: '/app/users',
+            color: '#007bff' // Consistent blue for Admin-related features
+        });
+    }
 
     // Support navigation items
     const supportItems = [
         {
             name: 'Help',
             icon: <MdHelp />,
-            path: '/help',
-            color: '#f6e05e'
+            path: '/app/help',
+            color: '#f6e05e' // Yellow accent
         },
         {
             name: 'Settings',
             icon: <MdSettings />,
-            path: '/settings',
-            color: '#ed64a6'
+            path: '/app/settings',
+            color: '#ed64a6' // Pink accent
         },
     ];
 
@@ -79,6 +92,7 @@ const Sidebar = () => {
                 {/* Sidebar Header */}
                 <div className="sidebar-header">
                     <div className="logo-container">
+                        {/* You can uncomment img src={wareviewLogo} if you have the image in assets */}
                         {/* <img src={wareviewLogo} alt="WareView Logo" className="logo" /> */}
                         {!isCollapsed && <span className="logo-text">WareView</span>}
                     </div>
@@ -154,22 +168,29 @@ const Sidebar = () => {
                     <div className="version-info">
                         {!isCollapsed && <span>v1.0.0</span>}
                     </div>
+                    {/* Display logged-in user's role */}
+                    {user && !isCollapsed && (
+                        <div className="user-role-display">
+                            Logged in as: <span className={`user-role-text role-${user.role.toLowerCase().replace(/\s/g, '-')}`}>{user.role}</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Inline CSS */}
+            {/* Inline CSS (Refined and Centralized) */}
             <style jsx>{`
+                /* Variables from App.css root are available here implicitly */
                 .sidebar {
                     width: 280px;
                     min-height: 100vh;
-                    background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
-                    border-right: 1px solid #e2e8f0;
+                    background: linear-gradient(180deg, var(--bg-white) 0%, #fafbfc 100%);
+                    border-right: 1px solid var(--border-light);
                     display: flex;
                     flex-direction: column;
-                    position: relative;
+                    position: relative; /* For z-index context */
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-                    z-index: 100;
+                    z-index: 100; /* Ensure it's above other content on mobile */
                 }
 
                 .sidebar.collapsed {
@@ -184,13 +205,15 @@ const Sidebar = () => {
                     align-items: center;
                     justify-content: space-between;
                     min-height: 80px;
+                    flex-shrink: 0; /* Prevent header from shrinking */
                 }
 
                 .logo-container {
                     display: flex;
                     align-items: center;
                     gap: 12px;
-                    flex: 1;
+                    flex: 1; /* Allows text to expand */
+                    overflow: hidden; /* Hide overflow when collapsed */
                 }
 
                 .logo {
@@ -198,13 +221,17 @@ const Sidebar = () => {
                     height: 36px;
                     border-radius: 8px;
                     object-fit: contain;
+                    flex-shrink: 0; /* Prevent logo from shrinking */
                 }
 
                 .logo-text {
                     font-size: 1.25rem;
                     font-weight: 700;
-                    color: #1f2937;
+                    color: var(--figma-text-dark-blue); /* Use theme color */
                     letter-spacing: -0.02em;
+                    white-space: nowrap; /* Keep text on one line */
+                    overflow: hidden;
+                    text-overflow: ellipsis; /* Add ellipsis if text overflows */
                 }
 
                 .toggle-btn {
@@ -220,24 +247,25 @@ const Sidebar = () => {
                     color: #64748b;
                     transition: all 0.2s ease;
                     font-size: 1.1rem;
+                    flex-shrink: 0;
                 }
 
                 .toggle-btn:hover {
                     background: #e2e8f0;
-                    color: #374151;
+                    color: var(--figma-primary-blue); /* Use theme color */
                 }
 
                 /* Navigation */
                 .sidebar-nav {
-                    flex: 1;
+                    flex: 1; /* Allow nav section to grow and take space */
                     padding: 20px 0;
-                    overflow-y: auto;
-                    scrollbar-width: none;
-                    -ms-overflow-style: none;
+                    overflow-y: auto; /* Enable internal scrolling */
+                    scrollbar-width: none; /* Hide scrollbar for Firefox */
+                    -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
                 }
 
                 .sidebar-nav::-webkit-scrollbar {
-                    display: none;
+                    display: none; /* Hide scrollbar for Webkit browsers */
                 }
 
                 .nav-section {
@@ -278,20 +306,21 @@ const Sidebar = () => {
                     transition: all 0.2s ease;
                     position: relative;
                     overflow: hidden;
-                    min-height: 48px;
+                    min-height: 48px; /* Ensure consistent height for all items */
                 }
 
                 .nav-item:hover {
-                    background: var(--item-bg, #f1f5f9);
-                    color: var(--item-color, #374151);
-                    transform: translateX(2px);
+                    background: var(--item-bg, #f1f5f9); /* Use item-specific background if defined */
+                    color: var(--item-color, #374151); /* Use item-specific color if defined */
+                    transform: translateX(2px); /* Subtle slide effect on hover */
                 }
 
                 .nav-item.active {
                     background: var(--item-bg, #f1f5f9);
                     color: var(--item-color, #374151);
                     font-weight: 600;
-                    border: 1px solid var(--item-border, #e2e8f0);
+                    border: 1px solid var(--item-border, #e2e8f0); /* Item-specific border */
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Subtle shadow for active item */
                 }
 
                 .nav-icon {
@@ -308,6 +337,8 @@ const Sidebar = () => {
                     opacity: 1;
                     transition: opacity 0.2s ease;
                     white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis; /* Add ellipsis if text overflows */
                 }
 
                 .active-indicator {
@@ -315,13 +346,20 @@ const Sidebar = () => {
                     right: 8px;
                     width: 4px;
                     height: 24px;
-                    background: var(--item-color, #667eea);
+                    background: var(--item-color, #667eea); /* Use item-specific color */
                     border-radius: 2px;
                     opacity: 0.8;
                 }
 
-                .collapsed .nav-text {
+                /* Collapsed state styles */
+                .collapsed .nav-text,
+                .collapsed .nav-section-title,
+                .collapsed .version-info {
                     opacity: 0;
+                    width: 0;
+                    overflow: hidden;
+                    pointer-events: none; /* Disable interaction with hidden text */
+                    transition: opacity 0.1s ease, width 0.1s ease; /* Faster transition when collapsing */
                 }
 
                 .collapsed .nav-item {
@@ -331,47 +369,78 @@ const Sidebar = () => {
 
                 .collapsed .active-indicator {
                     right: 4px;
-                    height: 32px;
+                    height: 32px; /* Slightly taller indicator when collapsed */
                 }
 
                 /* Footer */
                 .sidebar-footer {
                     padding: 16px 20px;
                     border-top: 1px solid #f1f5f9;
-                    margin-top: auto;
+                    margin-top: auto; /* Pushes footer to the bottom */
+                    text-align: center;
+                    flex-shrink: 0;
                 }
 
                 .version-info {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
                     font-size: 0.8rem;
                     color: #94a3b8;
                     font-weight: 500;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
+                
+                .user-role-display {
+                    font-size: 0.8rem;
+                    color: #94a3b8;
+                    font-weight: 500;
+                    margin-top: 8px;
+                }
+
+                .user-role-text {
+                    font-weight: 600;
+                    text-transform: capitalize;
+                    color: var(--figma-primary-blue); /* Default for roles */
+                }
+                /* Specific role colors (matching your UserPage.css badges) */
+                .user-role-text.role-admin { color: #e65100; }
+                .user-role-text.role-user { color: #00838f; }
+                .user-role-text.role-lab-technician { color: #2e7d32; }
+                .user-role-text.role-researcher { color: #6a1b9a; }
+                .user-role-text.role-manufacturing-engineer { color: #1565c0; }
+
 
                 /* Mobile Responsiveness */
                 @media (max-width: 768px) {
                     .sidebar {
-                        position: fixed;
+                        position: fixed; /* Fixed position for mobile overlay */
                         left: 0;
                         top: 0;
-                        z-index: 1000;
-                        transform: translateX(-100%);
+                        height: 100vh; /* Full height on mobile */
+                        width: 280px; /* Default mobile width */
+                        transform: translateX(-100%); /* Hidden by default */
+                        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+                        box-shadow: 0 0 15px rgba(0,0,0,0.2); /* Shadow when open */
                     }
 
                     .sidebar.mobile-open {
-                        transform: translateX(0);
+                        transform: translateX(0); /* Slide in */
                     }
 
+                    /* When collapsed on mobile, still take default mobile width */
                     .sidebar.collapsed {
-                        width: 280px;
+                        width: 280px; /* Collapsed state on mobile is full width but hidden */
+                    }
+
+                    /* Hide toggle button on mobile sidebar */
+                    .toggle-btn {
+                        display: none;
                     }
                 }
 
                 @media (max-width: 480px) {
                     .sidebar {
-                        width: 100vw;
+                        width: 100vw; /* Full screen width on very small devices */
                     }
 
                     .nav-items {
@@ -401,7 +470,7 @@ const Sidebar = () => {
                 }
 
                 .nav-text {
-                    animation: slideIn 0.3s ease-out;
+                    animation: slideIn 0.3s ease-out; /* Apply slide-in animation to text */
                 }
 
                 /* Hover effects */
@@ -419,7 +488,7 @@ const Sidebar = () => {
 
                 .nav-item:hover::before,
                 .nav-item.active::before {
-                    opacity: 0.05;
+                    opacity: 0.05; /* Subtle overlay on hover/active */
                 }
 
                 /* Scrollbar styling for webkit browsers */

@@ -29,7 +29,7 @@ const LoginPage = () => {
     try {
       const res = await login(email, password);
       if (res.success) {
-        navigate('/');
+        navigate('/app');
       } else {
         setError(res.message || 'Login failed. Please check your credentials.');
       }

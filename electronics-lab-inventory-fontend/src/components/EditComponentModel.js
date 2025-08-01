@@ -1,10 +1,10 @@
 // src/components/EditComponentModel.js
 import React, { useState, useEffect } from 'react';
-import { MdClose } from 'react-icons/md';
+import { MdClose, MdEdit, MdSave, MdCancel, MdInfo, MdWarning } from 'react-icons/md';
 import api from '../utils/api';
 import './EditComponentModel.css';
 
-const EditComponentModel = ({ component, onClose, onComponentUpdated, showNotification }) => { // Added showNotification prop
+const EditComponentModel = ({ component, onClose, onComponentUpdated, showNotification }) => {
   const [formData, setFormData] = useState({
     componentName: component.componentName || '',
     manufacturer: component.manufacturer || '',
@@ -24,7 +24,6 @@ const EditComponentModel = ({ component, onClose, onComponentUpdated, showNotifi
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [formError, setFormError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Removed successMessage state
 
   useEffect(() => {
     const fetchPredefinedCategories = async () => {
@@ -55,7 +54,6 @@ const EditComponentModel = ({ component, onClose, onComponentUpdated, showNotifi
     e.preventDefault();
     setIsSubmitting(true);
     setFormError(null);
-    // Removed setSuccessMessage
 
     // Basic client-side validation
     if (!formData.componentName || !formData.manufacturer || !formData.partNumber ||
@@ -82,201 +80,314 @@ const EditComponentModel = ({ component, onClose, onComponentUpdated, showNotifi
       };
 
       const response = await api.put(`/components/${component._id}`, dataToSend);
-      showNotification('Component updated successfully!', 'success'); // Trigger success notification
+      showNotification('Component updated successfully!', 'success');
       console.log('Component updated:', response.data);
-      onComponentUpdated(); // Notify parent to refresh list and close modal
+      onComponentUpdated();
     } catch (err) {
       console.error('Error updating component:', err.response?.data || err);
       setFormError(err.response?.data?.message || 'Failed to update component. Please try again.');
-      showNotification(err.response?.data?.message || 'Failed to update component.', 'error'); // Trigger error notification
+      showNotification(err.response?.data?.message || 'Failed to update component.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2>Edit Component: {component.componentName}</h2>
-          <button className="close-button" onClick={onClose}>
-            <MdClose />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="edit-component-form">
-          {formError && <p className="form-error">{formError}</p>}
-          {/* Removed successMessage display from here */}
-
-          <div className="form-group">
-            <label htmlFor="componentName">Component Name *</label>
-            <input
-              type="text"
-              id="componentName"
-              name="componentName"
-              value={formData.componentName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="manufacturer">Manufacturer *</label>
-            <input
-              type="text"
-              id="manufacturer"
-              name="manufacturer"
-              value={formData.manufacturer}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="partNumber">Part Number *</label>
-            <input
-              type="text"
-              id="partNumber"
-              name="partNumber"
-              value={formData.partNumber}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="category">Category *</label>
-            {loadingCategories ? (
-                <p>Loading categories...</p>
-            ) : (
-                <select
-                    id="category"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    required
-                >
-                    <option value="">Select a category</option>
-                    {predefinedCategories.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                </select>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="description">Description *</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
-            ></textarea>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="quantity">Quantity *</label>
-              <input
-                type="number"
-                id="quantity"
-                name="quantity"
-                value={formData.quantity}
-                onChange={handleChange}
-                min="0"
-                required
-                disabled // Quantity usually updated via inward/outward
-              />
+    <div className="edit-modal-overlay">
+      <div className="edit-modal-backdrop" onClick={onClose}></div>
+      <div className="edit-modal-container">
+        <div className="edit-modal-content">
+          {/* Enhanced Header */}
+          <div className="edit-modal-header">
+            <div className="edit-header-content">
+              <div className="edit-header-icon">
+                <MdEdit />
+              </div>
+              <div className="edit-header-text">
+                <h2>Edit Component</h2>
+                <p className="edit-component-name">{component.componentName}</p>
+              </div>
             </div>
-
-            <div className="form-group">
-              <label htmlFor="unitPrice">Unit Price (INR) *</label>
-              <input
-                type="number"
-                id="unitPrice"
-                name="unitPrice"
-                value={formData.unitPrice}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="location">Location *</label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="criticalLowThreshold">Critical Low Threshold *</label>
-            <input
-              type="number"
-              id="criticalLowThreshold"
-              name="criticalLowThreshold"
-              value={formData.criticalLowThreshold}
-              onChange={handleChange}
-              min="0"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="datasheetLink">Datasheet Link (URL)</label>
-            <input
-              type="url"
-              id="datasheetLink"
-              name="datasheetLink"
-              value={formData.datasheetLink}
-              onChange={handleChange}
-              placeholder="e.g., https://example.com/datasheet.pdf"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="tags">Tags (comma-separated)</label>
-            <input
-              type="text"
-              id="tags"
-              name="tags"
-              value={formData.tags}
-              onChange={handleChange}
-              placeholder="e.g., resistor, smd, 0805"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="status">Status *</label>
-            <select
-              id="status"
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              required
-            >
-              <option value="Active">Active</option>
-              <option value="Discontinued">Discontinued</option>
-              <option value="Obsolete">Obsolete</option>
-            </select>
-          </div>
-
-          <div className="modal-actions">
-            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? 'Updating...' : 'Update Component'}
+            <button className="edit-close-button" onClick={onClose}>
+              <MdClose />
             </button>
-            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={isSubmitting}>
+          </div>
+
+          {/* Form Content */}
+          <div className="edit-modal-body">
+            <form onSubmit={handleSubmit} className="edit-component-form">
+              {formError && (
+                <div className="edit-form-error">
+                  <MdWarning className="error-icon" />
+                  <span>{formError}</span>
+                </div>
+              )}
+
+              {/* Basic Information Section */}
+              <div className="edit-form-section">
+                <div className="edit-section-header">
+                  <h3>Basic Information</h3>
+                  <div className="edit-section-line"></div>
+                </div>
+                <div className="edit-form-grid">
+                  <div className="edit-form-group">
+                    <label htmlFor="componentName" className="edit-form-label">
+                      Component Name <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="componentName"
+                      name="componentName"
+                      value={formData.componentName}
+                      onChange={handleChange}
+                      className="edit-form-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="edit-form-group">
+                    <label htmlFor="manufacturer" className="edit-form-label">
+                      Manufacturer <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="manufacturer"
+                      name="manufacturer"
+                      value={formData.manufacturer}
+                      onChange={handleChange}
+                      className="edit-form-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="edit-form-group">
+                    <label htmlFor="partNumber" className="edit-form-label">
+                      Part Number <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="partNumber"
+                      name="partNumber"
+                      value={formData.partNumber}
+                      onChange={handleChange}
+                      className="edit-form-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="edit-form-group">
+                    <label htmlFor="category" className="edit-form-label">
+                      Category <span className="required">*</span>
+                    </label>
+                    {loadingCategories ? (
+                      <div className="edit-loading-state">
+                        <div className="edit-loading-spinner"></div>
+                        <span>Loading categories...</span>
+                      </div>
+                    ) : (
+                      <select
+                        id="category"
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
+                        className="edit-form-select"
+                        required
+                      >
+                        <option value="">Select a category</option>
+                        {predefinedCategories.map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </div>
+
+                <div className="edit-form-group full-width">
+                  <label htmlFor="description" className="edit-form-label">
+                    Description <span className="required">*</span>
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    className="edit-form-textarea"
+                    rows="3"
+                    required
+                  ></textarea>
+                </div>
+              </div>
+
+              {/* Inventory & Pricing Section */}
+              <div className="edit-form-section">
+                <div className="edit-section-header">
+                  <h3>Inventory & Pricing</h3>
+                  <div className="edit-section-line"></div>
+                </div>
+                <div className="edit-form-grid">
+                  <div className="edit-form-group">
+                    <label htmlFor="quantity" className="edit-form-label">
+                      Current Quantity <span className="required">*</span>
+                    </label>
+                    <div className="edit-input-with-info">
+                      <input
+                        type="number"
+                        id="quantity"
+                        name="quantity"
+                        value={formData.quantity}
+                        onChange={handleChange}
+                        className="edit-form-input"
+                        min="0"
+                        required
+                        disabled
+                      />
+                      <div className="edit-input-info">
+                        <MdInfo className="info-icon" />
+                        <span className="info-tooltip">Updated via inward/outward transactions</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="edit-form-group">
+                    <label htmlFor="unitPrice" className="edit-form-label">
+                      Unit Price (₹) <span className="required">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      id="unitPrice"
+                      name="unitPrice"
+                      value={formData.unitPrice}
+                      onChange={handleChange}
+                      className="edit-form-input"
+                      min="0"
+                      step="0.01"
+                      required
+                    />
+                  </div>
+
+                  <div className="edit-form-group">
+                    <label htmlFor="location" className="edit-form-label">
+                      Storage Location <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="location"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      className="edit-form-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="edit-form-group">
+                    <label htmlFor="criticalLowThreshold" className="edit-form-label">
+                      Low Stock Threshold <span className="required">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      id="criticalLowThreshold"
+                      name="criticalLowThreshold"
+                      value={formData.criticalLowThreshold}
+                      onChange={handleChange}
+                      className="edit-form-input"
+                      min="0"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Information Section */}
+              <div className="edit-form-section">
+                <div className="edit-section-header">
+                  <h3>Additional Information</h3>
+                  <div className="edit-section-line"></div>
+                </div>
+                <div className="edit-form-grid">
+                  <div className="edit-form-group">
+                    <label htmlFor="datasheetLink" className="edit-form-label">
+                      Datasheet Link
+                    </label>
+                    <input
+                      type="url"
+                      id="datasheetLink"
+                      name="datasheetLink"
+                      value={formData.datasheetLink}
+                      onChange={handleChange}
+                      className="edit-form-input"
+                      placeholder="https://example.com/datasheet.pdf"
+                    />
+                  </div>
+
+                  <div className="edit-form-group">
+                    <label htmlFor="status" className="edit-form-label">
+                      Status <span className="required">*</span>
+                    </label>
+                    <select
+                      id="status"
+                      name="status"
+                      value={formData.status}
+                      onChange={handleChange}
+                      className="edit-form-select"
+                      required
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Discontinued">Discontinued</option>
+                      <option value="Obsolete">Obsolete</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="edit-form-group full-width">
+                  <label htmlFor="tags" className="edit-form-label">
+                    Tags
+                  </label>
+                  <input
+                    type="text"
+                    id="tags"
+                    name="tags"
+                    value={formData.tags}
+                    onChange={handleChange}
+                    className="edit-form-input"
+                    placeholder="resistor, smd, 0805 (comma-separated)"
+                  />
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Enhanced Footer */}
+          <div className="edit-modal-footer">
+            <button 
+              type="button" 
+              className="edit-btn edit-btn-secondary" 
+              onClick={onClose} 
+              disabled={isSubmitting}
+            >
+              <MdCancel />
               Cancel
             </button>
+            <button 
+              type="submit" 
+              className="edit-btn edit-btn-primary" 
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="edit-btn-spinner"></div>
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <MdSave />
+                  Update Component
+                </>
+              )}
+            </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

@@ -12,7 +12,8 @@ import {
   MdSearch,
   MdMoreVert,
   MdTrendingUp,
-  MdTrendingDown
+  MdTrendingDown,
+  MdVisibility
 } from "react-icons/md";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
@@ -105,8 +106,10 @@ const OrdersPage = () => {
           <div className="orders-header">
             <div className="header-left">
               <div className="page-title">
-                <MdAssignmentTurnedIn className="title-icon"/>
-                <div>
+                <div className="title-icon-wrapper">
+                  <MdAssignmentTurnedIn className="title-icon"/>
+                </div>
+                <div className="title-content">
                   <h1>Orders Management</h1>
                   <p className="subtitle">Track and manage all inventory transactions</p>
                 </div>
@@ -182,10 +185,19 @@ const OrdersPage = () => {
               <div className="orders-section">
                 <div className="section-header">
                   <div className="section-title">
-                    <MdInput className="section-icon inward-color" />
-                    <span>Inward Orders</span>
+                    <div className="section-icon-wrapper inward">
+                      <MdInput className="section-icon" />
+                    </div>
+                    <div className="section-title-text">
+                      <span className="section-main-title">Inward Orders</span>
+                      <span className="section-subtitle">Stock received</span>
+                    </div>
                   </div>
-                  <button className="view-all-btn">View All</button>
+                  <button className="view-all-btn">
+                    <MdVisibility />
+                    <span>View All</span>
+                    <MdArrowForward />
+                  </button>
                 </div>
                 <div className="orders-table-container">
                   {inwardOrders.length === 0 ? (
@@ -247,10 +259,19 @@ const OrdersPage = () => {
               <div className="orders-section">
                 <div className="section-header">
                   <div className="section-title">
-                    <MdOutput className="section-icon outward-color" />
-                    <span>Outward Orders</span>
+                    <div className="section-icon-wrapper outward">
+                      <MdOutput className="section-icon" />
+                    </div>
+                    <div className="section-title-text">
+                      <span className="section-main-title">Outward Orders</span>
+                      <span className="section-subtitle">Stock issued</span>
+                    </div>
                   </div>
-                  <button className="view-all-btn">View All</button>
+                  <button className="view-all-btn">
+                    <MdVisibility />
+                    <span>View All</span>
+                    <MdArrowForward />
+                  </button>
                 </div>
                 <div className="orders-table-container">
                   {outwardOrders.length === 0 ? (
@@ -314,10 +335,19 @@ const OrdersPage = () => {
           <div className="activity-section">
             <div className="section-header">
               <div className="section-title">
-                <MdHistory className="section-icon" />
-                <span>Recent Activity</span>
+                <div className="section-icon-wrapper activity">
+                  <MdHistory className="section-icon" />
+                </div>
+                <div className="section-title-text">
+                  <span className="section-main-title">Recent Activity</span>
+                  <span className="section-subtitle">Latest transactions</span>
+                </div>
               </div>
-              <button className="view-all-btn">View All</button>
+              <button className="view-all-btn">
+                <MdVisibility />
+                <span>View All</span>
+                <MdArrowForward />
+              </button>
             </div>
             <div className="activity-list">
               {recentActivity.length === 0 ? (
@@ -337,6 +367,9 @@ const OrdersPage = () => {
                         {act.type === "outward" && act.issuedTo && <> to <strong>{act.issuedTo}</strong></>}
                       </div>
                       <div className="activity-time">{formatTime(act.timestamp || act.createdAt)}</div>
+                    </div>
+                    <div className="activity-status">
+                      {statusBadge(act.status)}
                     </div>
                   </div>
                 ))
@@ -375,7 +408,7 @@ function OrdersCSS() {
         background: #f8fafc;
       }
 
-      /* Header */
+      /* Enhanced Header */
       .orders-header {
         display: flex;
         justify-content: space-between;
@@ -387,18 +420,26 @@ function OrdersCSS() {
       .page-title {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 20px;
+      }
+
+      .title-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
       }
 
       .title-icon {
-        font-size: 2.5rem;
-        color: #6366f1;
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 2rem;
+        color: white;
       }
 
-      .page-title h1 {
+      .title-content h1 {
         font-size: 2.25rem;
         font-weight: 700;
         color: #1f2937;
@@ -410,6 +451,7 @@ function OrdersCSS() {
         color: #6b7280;
         font-size: 1rem;
         margin: 4px 0 0 0;
+        font-weight: 500;
       }
 
       .header-actions {
@@ -429,16 +471,18 @@ function OrdersCSS() {
         left: 12px;
         color: #9ca3af;
         font-size: 1.1rem;
+        z-index: 1;
       }
 
       .search-box input {
-        padding: 10px 12px 10px 40px;
+        padding: 12px 16px 12px 44px;
         border: 2px solid #e5e7eb;
         border-radius: 12px;
         font-size: 0.95rem;
-        width: 250px;
+        width: 280px;
         transition: all 0.2s;
         outline: none;
+        background: white;
       }
 
       .search-box input:focus {
@@ -453,8 +497,8 @@ function OrdersCSS() {
         background: white;
         border: 2px solid #e5e7eb;
         border-radius: 12px;
-        padding: 10px 12px;
-        gap: 8px;
+        padding: 12px 16px;
+        gap: 10px;
         transition: all 0.2s;
       }
 
@@ -469,6 +513,7 @@ function OrdersCSS() {
         font-size: 0.95rem;
         color: #374151;
         cursor: pointer;
+        font-weight: 500;
       }
 
       .refresh-btn {
@@ -494,21 +539,21 @@ function OrdersCSS() {
       /* Stats Cards */
       .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 24px;
         margin-bottom: 32px;
       }
 
       .stat-card {
         background: white;
-        border-radius: 16px;
-        padding: 24px;
+        border-radius: 20px;
+        padding: 28px;
         display: flex;
         align-items: center;
-        gap: 20px;
+        gap: 24px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         transition: all 0.3s;
-        border-left: 4px solid transparent;
+        border-left: 5px solid transparent;
       }
 
       .stat-card.inward {
@@ -520,45 +565,50 @@ function OrdersCSS() {
       }
 
       .stat-card:hover {
-        transform: translateY(-4px);
+        transform: translateY(-6px);
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
       }
 
       .stat-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 16px;
+        width: 70px;
+        height: 70px;
+        border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
+        font-size: 2rem;
         color: white;
       }
 
       .stat-card.inward .stat-icon {
         background: linear-gradient(135deg, #10b981, #059669);
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
       }
 
       .stat-card.outward .stat-icon {
         background: linear-gradient(135deg, #f59e0b, #d97706);
+        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
       }
 
       .stat-number {
-        font-size: 2rem;
+        font-size: 2.5rem;
         font-weight: 700;
         color: #1f2937;
         line-height: 1;
+        margin-bottom: 4px;
       }
 
       .stat-label {
-        font-size: 1rem;
-        color: #6b7280;
-        margin: 4px 0;
+        font-size: 1.125rem;
+        color: #4b5563;
+        margin: 8px 0 4px 0;
+        font-weight: 600;
       }
 
       .stat-subtext {
         font-size: 0.875rem;
         color: #9ca3af;
+        font-weight: 500;
       }
 
       /* Error Alert */
@@ -566,13 +616,14 @@ function OrdersCSS() {
         display: flex;
         align-items: center;
         gap: 12px;
-        background: #fef2f2;
+        background: linear-gradient(135deg, #fef2f2, #fee2e2);
         border: 1px solid #fecaca;
         color: #dc2626;
-        padding: 16px;
-        border-radius: 12px;
+        padding: 18px 24px;
+        border-radius: 16px;
         margin-bottom: 24px;
         font-weight: 500;
+        box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1);
       }
 
       /* Loading */
@@ -610,54 +661,103 @@ function OrdersCSS() {
 
       .orders-section {
         background: white;
-        border-radius: 16px;
+        border-radius: 20px;
         overflow: hidden;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
       }
 
+      .orders-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.12), 0 6px 12px -2px rgba(0, 0, 0, 0.08);
+      }
+
+      /* Enhanced Section Header */
       .section-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 24px 24px 16px 24px;
-        border-bottom: 1px solid #f3f4f6;
+        padding: 24px 28px;
+        border-bottom: 2px solid #f8fafc;
+        background: linear-gradient(135deg, #fafbfc, #f8fafc);
       }
 
       .section-title {
         display: flex;
         align-items: center;
-        gap: 12px;
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #1f2937;
+        gap: 16px;
+      }
+
+      .section-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .section-icon-wrapper.inward {
+        background: linear-gradient(135deg, #10b981, #059669);
+      }
+
+      .section-icon-wrapper.outward {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+      }
+
+      .section-icon-wrapper.activity {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
       }
 
       .section-icon {
         font-size: 1.5rem;
+        color: white;
       }
 
-      .inward-color {
-        color: #10b981;
+      .section-title-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
       }
 
-      .outward-color {
-        color: #f59e0b;
+      .section-main-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        line-height: 1.2;
       }
 
-      .view-all-btn {
-        color: #6366f1;
-        background: none;
-        border: none;
+      .section-subtitle {
         font-size: 0.875rem;
+        color: #6b7280;
         font-weight: 500;
+      }
+
+      /* Enhanced View All Button */
+      .view-all-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6366f1;
+        background: linear-gradient(135deg, #f0f4ff, #e0e7ff);
+        border: 1px solid #c7d2fe;
+        font-size: 0.875rem;
+        font-weight: 600;
         cursor: pointer;
-        padding: 8px 12px;
-        border-radius: 8px;
+        padding: 10px 16px;
+        border-radius: 12px;
         transition: all 0.2s;
       }
 
       .view-all-btn:hover {
-        background: #f3f4f6;
+        background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+      }
+
+      .view-all-btn svg {
+        font-size: 1rem;
       }
 
       /* Table */
@@ -672,17 +772,18 @@ function OrdersCSS() {
       }
 
       .orders-table th {
-        background: #f9fafb;
+        background: linear-gradient(135deg, #f9fafb, #f3f4f6);
         padding: 16px 24px;
         text-align: left;
-        font-weight: 600;
+        font-weight: 700;
         color: #374151;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 2px solid #e5e7eb;
         position: sticky;
         top: 0;
+        z-index: 5;
       }
 
       .table-row {
@@ -690,12 +791,12 @@ function OrdersCSS() {
       }
 
       .table-row:hover {
-        background: #f9fafb;
+        background: linear-gradient(135deg, #f9fafb, #f8fafc);
       }
 
       .orders-table td {
-        padding: 16px 24px;
-        border-bottom: 1px solid #f3f4f6;
+        padding: 18px 24px;
+        border-bottom: 1px solid #f1f5f9;
         vertical-align: middle;
       }
 
@@ -703,26 +804,34 @@ function OrdersCSS() {
         font-family: 'Monaco', 'Menlo', monospace;
         font-size: 0.875rem;
         color: #6366f1;
-        font-weight: 600;
+        font-weight: 700;
+        background: #f0f4ff;
+        padding: 4px 8px;
+        border-radius: 6px;
+        display: inline-block;
       }
 
       .component-name {
-        font-weight: 500;
+        font-weight: 600;
         color: #1f2937;
+        font-size: 0.95rem;
       }
 
       .quantity-cell {
-        font-weight: 600;
+        font-weight: 700;
         color: #059669;
+        font-size: 1rem;
       }
 
       .supplier-cell, .issued-to-cell {
         color: #6b7280;
+        font-weight: 500;
       }
 
       .date-cell {
         font-size: 0.875rem;
         color: #6b7280;
+        font-weight: 500;
       }
 
       .action-btn {
@@ -738,6 +847,7 @@ function OrdersCSS() {
       .action-btn:hover {
         background: #f3f4f6;
         color: #6b7280;
+        transform: scale(1.1);
       }
 
       /* Status Badge */
@@ -745,11 +855,12 @@ function OrdersCSS() {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 6px 12px;
-        border-radius: 20px;
+        padding: 8px 14px;
+        border-radius: 24px;
         font-size: 0.875rem;
-        font-weight: 500;
+        font-weight: 600;
         line-height: 1;
+        text-transform: capitalize;
       }
 
       .status-icon {
@@ -784,39 +895,55 @@ function OrdersCSS() {
         color: #9ca3af;
       }
 
-      /* Activity Section */
+      /* Enhanced Activity Section */
       .activity-section {
         background: white;
-        border-radius: 16px;
+        border-radius: 20px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+      }
+
+      .activity-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.12), 0 6px 12px -2px rgba(0, 0, 0, 0.08);
       }
 
       .activity-list {
-        padding: 0 24px 24px 24px;
+        padding: 0 28px 28px 28px;
       }
 
       .activity-item {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 16px;
-        padding: 16px 0;
-        border-bottom: 1px solid #f3f4f6;
+        padding: 18px 0;
+        border-bottom: 1px solid #f1f5f9;
+        transition: all 0.2s ease;
       }
 
       .activity-item:last-child {
         border-bottom: none;
       }
 
-      .activity-avatar {
-        width: 40px;
-        height: 40px;
+      .activity-item:hover {
+        background: linear-gradient(135deg, #fafbfc, #f8fafc);
+        padding: 18px 16px;
+        margin: 0 -16px;
         border-radius: 12px;
+        border-bottom: 1px solid transparent;
+      }
+
+      .activity-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
 
       .activity-avatar.inward {
@@ -835,19 +962,26 @@ function OrdersCSS() {
       .activity-text {
         color: #374151;
         line-height: 1.5;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+        font-weight: 500;
       }
 
       .activity-time {
         color: #9ca3af;
         font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .activity-status {
+        flex-shrink: 0;
       }
 
       .empty-activity {
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 40px 20px;
+        padding: 60px 20px;
         color: #9ca3af;
       }
 
@@ -855,18 +989,19 @@ function OrdersCSS() {
       @media (max-width: 1200px) {
         .orders-grid {
           grid-template-columns: 1fr;
+          gap: 24px;
         }
       }
 
       @media (max-width: 768px) {
         .orders-content {
-          padding: 16px;
+          padding: 20px;
         }
 
         .orders-header {
           flex-direction: column;
           align-items: stretch;
-          gap: 16px;
+          gap: 20px;
         }
 
         .header-actions {
@@ -882,7 +1017,7 @@ function OrdersCSS() {
           grid-template-columns: 1fr;
         }
 
-        .page-title h1 {
+        .title-content h1 {
           font-size: 1.75rem;
         }
 
@@ -892,6 +1027,54 @@ function OrdersCSS() {
 
         .orders-table {
           min-width: 600px;
+        }
+
+        .section-header {
+          padding: 20px;
+        }
+
+        .activity-item {
+          padding: 16px 0;
+        }
+
+        .view-all-btn {
+          padding: 8px 12px;
+          font-size: 0.8rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .orders-content {
+          padding: 16px;
+        }
+
+        .page-title {
+          flex-direction: column;
+          text-align: center;
+          gap: 12px;
+        }
+
+        .title-icon-wrapper {
+          width: 50px;
+          height: 50px;
+        }
+
+        .title-icon {
+          font-size: 1.5rem;
+        }
+
+        .stat-card {
+          padding: 20px;
+        }
+
+        .stat-icon {
+          width: 50px;
+          height: 50px;
+          font-size: 1.5rem;
+        }
+
+        .stat-number {
+          font-size: 2rem;
         }
       }
     `}</style>

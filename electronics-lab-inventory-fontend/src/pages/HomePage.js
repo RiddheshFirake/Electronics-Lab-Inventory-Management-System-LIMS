@@ -31,6 +31,8 @@ const HomePage = () => {
   const [systemStatsData, setSystemStatsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [alertsData, setAlertsData] = useState(null);
+
 
   // Smart Assessment State
   const [assessmentOpen, setAssessmentOpen] = useState(false);
@@ -39,38 +41,79 @@ const HomePage = () => {
   const [assessmentError, setAssessmentError] = useState(null);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const [
-          overviewRes, monthlyStatsRes, dailyTrendsRes, topComponentsRes,
-          notificationSummaryRes, userActivityRes, systemStatsRes
-        ] = await Promise.all([
-          api.get('/dashboard/overview'),
-          api.get('/dashboard/monthly-stats?months=6'),
-          api.get('/dashboard/daily-trends?days=7'),
-          api.get('/dashboard/top-components?type=usage&limit=5'),
-          api.get('/notifications/stats'),
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Base API calls that all dashboard users can access
+      const baseApiCalls = [
+        api.get('/dashboard/overview'),
+        api.get('/dashboard/monthly-stats?months=6'),
+        api.get('/dashboard/daily-trends?days=7'),
+        api.get('/dashboard/top-components?type=usage&limit=5'),
+        api.get('/notifications/stats'), // This might need to be checked too
+        api.get('/dashboard/alerts') // Added the alerts endpoint
+      ];
+
+      // Admin-only API calls
+      const adminApiCalls = [];
+      
+      // Check if current user is admin before adding admin-only endpoints
+      if (user && user.role === 'Admin') {
+        adminApiCalls.push(
           api.get('/dashboard/user-activity'),
-          api.get('/dashboard/system-stats'),
-        ]);
-        setOverviewData(overviewRes.data.data);
-        setMonthlyStats(monthlyStatsRes.data.data);
-        setDailyTrends(dailyTrendsRes.data.data);
-        setTopComponents(topComponentsRes.data.data);
-        setNotificationSummary(notificationSummaryRes.data.data);
+          api.get('/dashboard/system-stats')
+        );
+      }
+
+      // Combine all API calls
+      const allApiCalls = [...baseApiCalls, ...adminApiCalls];
+      
+      const responses = await Promise.all(allApiCalls);
+      
+      // Extract responses for base calls (always present)
+      const [
+        overviewRes,
+        monthlyStatsRes,
+        dailyTrendsRes,
+        topComponentsRes,
+        notificationSummaryRes,
+        alertsRes
+      ] = responses;
+
+      // Set the base data
+      setOverviewData(overviewRes.data.data);
+      setMonthlyStats(monthlyStatsRes.data.data);
+      setDailyTrends(dailyTrendsRes.data.data);
+      setTopComponents(topComponentsRes.data.data);
+      setNotificationSummary(notificationSummaryRes.data.data);
+      setAlertsData(alertsRes.data.data); // Assuming you have this state
+
+      // Set admin data only if user is admin
+      if (user && user.role === 'Admin' && adminApiCalls.length > 0) {
+        const adminResponses = responses.slice(baseApiCalls.length);
+        const [userActivityRes, systemStatsRes] = adminResponses;
+        
         setUserActivityData(userActivityRes.data.data);
         setSystemStatsData(systemStatsRes.data.data);
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data. Please check your connection or permissions.');
-      } finally {
-        setLoading(false);
+      } else {
+        // Clear admin data for non-admin users
+        setUserActivityData(null);
+        setSystemStatsData(null);
       }
-    };
-    fetchDashboardData();
-  }, []);
+      
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data. Please check your connection or permissions.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchDashboardData();
+}, [user]); // Add user as dependency to re-fetch when user changes
+
 
   const navigate = useNavigate();
   // Format currency for IN
@@ -1809,1254 +1852,1235 @@ ${JSON.stringify(smartInput, null, 2)}
             </div>
 
 
-            {/* Enhanced User Activity */}
-            <div className="dashboard-section user-activity-enhanced">
-              <div className="user-activity-header">
-                <div className="header-content">
-                  <div className="title-icon-wrapper">
-                    <MdHistory className="section-icon" />
-                  </div>
-                  <div className="title-content">
-                    <h2 className="section-title">User Activity</h2>
-                    <p className="section-subtitle">Team performance and engagement metrics</p>
-                  </div>
-                </div>
-                <div className="header-actions">
-                  <div className="activity-filter">
-                    <button className="filter-btn active" data-filter="all">All</button>
-                    <button className="filter-btn" data-filter="today">Today</button>
-                    <button className="filter-btn" data-filter="week">Week</button>
-                  </div>
-                  <button className="export-btn">
-                    <MdGetApp />
-                  </button>
-                </div>
-              </div>
-
-              <div className="activity-content">
-                {userActivityData ? (
-                  <>
-                    {/* Activity Overview Stats */}
-                    <div className="activity-overview">
-                      <div className="overview-stat">
-                        <div className="stat-icon transactions">
-                          <MdSwapHoriz />
-                        </div>
-                        <div className="stat-content">
-                          <span className="stat-number">
-                            {userActivityData.userActivity.reduce((sum, activity) => 
-                              sum + activity.inwardTransactions + activity.outwardTransactions, 0
-                            ).toLocaleString()}
-                          </span>
-                          <span className="stat-label">Total Transactions</span>
-                        </div>
-                      </div>
-                      
-                      <div className="overview-stat">
-                        <div className="stat-icon active-users">
-                          <MdPeople />
-                        </div>
-                        <div className="stat-content">
-                          <span className="stat-number">{userActivityData.recentlyActiveUsers.length}</span>
-                          <span className="stat-label">Active Users</span>
-                        </div>
-                      </div>
-                      
-                      <div className="overview-stat">
-                        <div className="stat-icon total-value">
-                          <MdAttachMoney />
-                        </div>
-                        <div className="stat-content">
-                          <span className="stat-number">
-                            {formatCurrency(userActivityData.userActivity.reduce((sum, activity) => 
-                              sum + (activity.totalValueHandled || 0), 0
-                            ))}
-                          </span>
-                          <span className="stat-label">Total Value</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Transaction Activity Section */}
-                    <div className="activity-section">
-                      <div className="section-header">
-                        <div className="section-title-group">
-                          <MdBarChart className="section-icon-small" />
-                          <h3>Transaction Activity</h3>
-                        </div>
-                        <span className="activity-count">{userActivityData.userActivity.length} users</span>
-                      </div>
-                      
-                      {userActivityData.userActivity.length > 0 ? (
-                        <div className="transaction-cards">
-                          {userActivityData.userActivity.map((activity, index) => {
-                            const totalTransactions = activity.inwardTransactions + activity.outwardTransactions;
-                            const inwardPercentage = totalTransactions ? (activity.inwardTransactions / totalTransactions) * 100 : 0;
-                            const outwardPercentage = totalTransactions ? (activity.outwardTransactions / totalTransactions) * 100 : 0;
-                            
-                            return (
-                              <div key={activity._id} className="transaction-card">
-                                <div className="card-header">
-                                  <div className="user-profile">
-                                    <div className="user-avatar">
-                                      <span className="avatar-text">
-                                        {activity.userName.split(' ').map(n => n[0]).join('').toUpperCase()}
-                                      </span>
-                                      <div className="status-indicator active"></div>
-                                    </div>
-                                    <div className="user-info">
-                                      <span className="user-name">{activity.userName}</span>
-                                      <span className="user-role">{activity.userRole}</span>
-                                    </div>
-                                  </div>
-                                  <div className="performance-badge">
-                                    <MdTrendingUp />
-                                    <span>
-                                      {index === 0 ? 'Top' : index === 1 ? '2nd' : index === 2 ? '3rd' : `${index + 1}th`}
-                                    </span>
-                                  </div>
-                                </div>
-                                
-                                <div className="transaction-stats">
-                                  <div className="stat-row">
-                                    <div className="stat-item inward">
-                                      <div className="stat-icon">
-                                        <MdArrowDownward />
-                                      </div>
-                                      <div className="stat-details">
-                                        <span className="stat-number">{activity.inwardTransactions}</span>
-                                        <span className="stat-label">Inward</span>
-                                      </div>
-                                      <div className="stat-percentage">{Math.round(inwardPercentage)}%</div>
-                                    </div>
-                                    
-                                    <div className="stat-item outward">
-                                      <div className="stat-icon">
-                                        <MdArrowUpward />
-                                      </div>
-                                      <div className="stat-details">
-                                        <span className="stat-number">{activity.outwardTransactions}</span>
-                                        <span className="stat-label">Outward</span>
-                                      </div>
-                                      <div className="stat-percentage">{Math.round(outwardPercentage)}%</div>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="transaction-bar">
-                                    <div className="bar-fill inward-fill" style={{width: `${inwardPercentage}%`}}></div>
-                                    <div className="bar-fill outward-fill" style={{width: `${outwardPercentage}%`}}></div>
-                                  </div>
-                                </div>
-                                
-                                <div className="summary-stats">
-                                  <div className="summary-item">
-                                    <span className="summary-label">Total Units</span>
-                                    <span className="summary-value">{activity.totalQuantityHandled?.toLocaleString() || 0}</span>
-                                  </div>
-                                  <div className="summary-item">
-                                    <span className="summary-label">Total Value</span>
-                                    <span className="summary-value">{formatCurrency(activity.totalValueHandled || 0)}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="no-data-message">No user transaction activity found.</div>
-                      )}
-                    </div>
-
-                    {/* Recently Active Users Section */}
-                    <div className="activity-section">
-                      <div className="section-header">
-                        <div className="section-title-group">
-                          <MdAccessTime className="section-icon-small" />
-                          <h3>Recently Active Users</h3>
-                        </div>
-                        <span className="activity-count">{userActivityData.recentlyActiveUsers.length} online</span>
-                      </div>
-                      
-                      {userActivityData.recentlyActiveUsers.length > 0 ? (
-                        <div className="recent-users-grid">
-                          {userActivityData.recentlyActiveUsers.map(user => {
-                            const lastLogin = new Date(user.lastLogin);
-                            const now = new Date();
-                            const diffInMinutes = Math.floor((now - lastLogin) / (1000 * 60));
-                            const timeAgo = diffInMinutes < 60 ? 
-                              `${diffInMinutes}m ago` : 
-                              diffInMinutes < 1440 ? 
-                              `${Math.floor(diffInMinutes / 60)}h ago` : 
-                              `${Math.floor(diffInMinutes / 1440)}d ago`;
-                            
-                            return (
-                              <div key={user._id} className="recent-user-card">
-                                <div className="user-card-header">
-                                  <div className="user-avatar-large">
-                                    <span className="avatar-text">
-                                      {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                                    </span>
-                                    <div className={`status-indicator ${diffInMinutes < 30 ? 'online' : 'away'}`}></div>
-                                  </div>
-                                  <div className="user-details">
-                                    <span className="user-name-large">{user.name}</span>
-                                    <span className="user-role-badge">{user.role}</span>
-                                  </div>
-                                </div>
-                                
-                                <div className="user-activity-info">
-                                  <div className="activity-time">
-                                    <MdSchedule />
-                                    <span>Last seen {timeAgo}</span>
-                                  </div>
-                                  <div className="login-details">
-                                    <span className="login-date">{lastLogin.toLocaleDateString()}</span>
-                                    <span className="login-time">{lastLogin.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="no-data-message">No recently active users found.</div>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <div className="no-data-state">
-                    <div className="no-data-illustration">
-                      <MdHistory className="no-data-icon" />
-                      <div className="access-denied-badge">
-                        <MdLock />
-                      </div>
-                    </div>
-                    <div className="no-data-content">
-                      <h3>Admin Access Required</h3>
-                      <p>User activity data is only available to administrators. Please contact your system administrator for access.</p>
-                      <button className="request-access-btn">
-                        <MdSecurity />
-                        <span>Request Access</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Enhanced Inline CSS */}
-              <style>{`
-                .user-activity-enhanced {
-                  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
-                  border: 1px solid #e2e8f0;
-                  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-                  border-radius: 16px;
-                  padding: 0;
-                  overflow: hidden;
-                  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                  position: relative;
-                }
-
-                .user-activity-enhanced:hover {
-                  transform: translateY(-2px);
-                  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-                }
-
-                .user-activity-enhanced::before {
-                  content: '';
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                  right: 0;
-                  height: 4px;
-                  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #3dc47e 100%);
-                }
-
-                /* Header Styles */
-                .user-activity-header {
-                  padding: 24px 24px 20px 24px;
-                  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-                  border-bottom: 1px solid #e2e8f0;
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: flex-start;
-                }
-
-                .header-content {
-                  display: flex;
-                  align-items: center;
-                  gap: 16px;
-                }
-
-                .title-icon-wrapper {
-                  width: 48px;
-                  height: 48px;
-                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                  border-radius: 12px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-                }
-
-                .section-icon {
-                  color: white;
-                  font-size: 1.5rem;
-                }
-
-                .title-content {
-                  display: flex;
-                  flex-direction: column;
-                }
-
-                .section-title {
-                  font-size: 1.4rem;
-                  font-weight: 700;
-                  color: #1f2937;
-                  margin: 0 0 4px 0;
-                  letter-spacing: -0.02em;
-                }
-
-                .section-subtitle {
-                  font-size: 0.9rem;
-                  color: #6b7280;
-                  margin: 0;
-                  font-weight: 500;
-                }
-
-                .header-actions {
-                  display: flex;
-                  align-items: center;
-                  gap: 12px;
-                }
-
-                .activity-filter {
-                  display: flex;
-                  background: white;
-                  border: 1px solid #e2e8f0;
-                  border-radius: 8px;
-                  padding: 2px;
-                }
-
-                .filter-btn {
-                  padding: 6px 12px;
-                  background: transparent;
-                  border: none;
-                  border-radius: 6px;
-                  font-size: 0.85rem;
-                  font-weight: 500;
-                  cursor: pointer;
-                  transition: all 0.2s ease;
-                  color: #6b7280;
-                }
-
-                .filter-btn.active {
-                  background: #667eea;
-                  color: white;
-                  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
-                }
-
-                .filter-btn:not(.active):hover {
-                  background: #f8fafc;
-                  color: #374151;
-                }
-
-                .export-btn {
-                  width: 36px;
-                  height: 36px;
-                  background: #f1f5f9;
-                  border: 1px solid #e2e8f0;
-                  border-radius: 8px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  cursor: pointer;
-                  color: #64748b;
-                  transition: all 0.2s ease;
-                }
-
-                .export-btn:hover {
-                  background: #e2e8f0;
-                  color: #667eea;
-                }
-
-                /* Content Styles */
-                .activity-content {
-                  padding: 24px;
-                }
-
-                /* Activity Overview */
-                .activity-overview {
-                  display: grid;
-                  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-                  gap: 16px;
-                  margin-bottom: 32px;
-                  padding: 20px;
-                  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-                  border-radius: 12px;
-                  border: 1px solid #e2e8f0;
-                }
-
-                .overview-stat {
-                  display: flex;
-                  align-items: center;
-                  gap: 12px;
-                  padding: 16px;
-                  background: white;
-                  border-radius: 10px;
-                  border: 1px solid #e2e8f0;
-                  transition: all 0.2s ease;
-                }
-
-                .overview-stat:hover {
-                  transform: translateY(-2px);
-                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                }
-
-                .stat-icon {
-                  width: 44px;
-                  height: 44px;
-                  border-radius: 10px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-size: 1.3rem;
-                }
-
-                .stat-icon.transactions {
-                  background: #dbeafe;
-                  color: #1d4ed8;
-                }
-
-                .stat-icon.active-users {
-                  background: #dcfce7;
-                  color: #16a34a;
-                }
-
-                .stat-icon.total-value {
-                  background: #fef3c7;
-                  color: #d97706;
-                }
-
-                .stat-content {
-                  display: flex;
-                  flex-direction: column;
-                }
-
-                .stat-number {
-                  font-size: 1.6rem;
-                  font-weight: 800;
-                  color: #1f2937;
-                  line-height: 1.2;
-                }
-
-                .stat-label {
-                  font-size: 0.8rem;
-                  color: #6b7280;
-                  text-transform: uppercase;
-                  letter-spacing: 0.5px;
-                  font-weight: 600;
-                }
-
-                /* Activity Sections */
-                .activity-section {
-                  margin-bottom: 32px;
-                }
-
-                .activity-section:last-child {
-                  margin-bottom: 0;
-                }
-
-                .section-header {
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                  margin-bottom: 20px;
-                  padding-bottom: 12px;
-                  border-bottom: 2px solid #f1f5f9;
-                }
-
-                .section-title-group {
-                  display: flex;
-                  align-items: center;
-                  gap: 8px;
-                }
-
-                .section-icon-small {
-                  font-size: 1.2rem;
-                  color: #667eea;
-                }
-
-                .section-header h3 {
-                  font-size: 1.2rem;
-                  font-weight: 700;
-                  color: #1f2937;
-                  margin: 0;
-                }
-
-                .activity-count {
-                  font-size: 0.85rem;
-                  color: #6b7280;
-                  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-                  padding: 4px 12px;
-                  border-radius: 12px;
-                  font-weight: 600;
-                }
-
-                /* Transaction Cards */
-                .transaction-cards {
-                  display: grid;
-                  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-                  gap: 20px;
-                }
-
-                .transaction-card {
-                  background: white;
-                  border: 1px solid #e2e8f0;
-                  border-radius: 12px;
-                  padding: 20px;
-                  transition: all 0.3s ease;
-                  position: relative;
-                  overflow: hidden;
-                }
-
-                .transaction-card:hover {
-                  transform: translateY(-4px);
-                  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-                  border-color: #cbd5e1;
-                }
-
-                .transaction-card::before {
-                  content: '';
-                  position: absolute;
-                  left: 0;
-                  top: 0;
-                  bottom: 0;
-                  width: 4px;
-                  background: linear-gradient(180deg, #667eea 0%, #3dc47e 100%);
-                  opacity: 0;
-                  transition: opacity 0.3s ease;
-                }
-
-                .transaction-card:hover::before {
-                  opacity: 1;
-                }
-
-                .card-header {
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                  margin-bottom: 20px;
-                }
-
-                .user-profile {
-                  display: flex;
-                  align-items: center;
-                  gap: 12px;
-                }
-
-                .user-avatar {
-                  position: relative;
-                  width: 48px;
-                  height: 48px;
-                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                  border-radius: 50%;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-                }
-
-                .avatar-text {
-                  color: white;
-                  font-weight: 700;
-                  font-size: 1rem;
-                  letter-spacing: 0.5px;
-                }
-
-                .status-indicator {
-                  position: absolute;
-                  bottom: 2px;
-                  right: 2px;
-                  width: 12px;
-                  height: 12px;
-                  border: 2px solid white;
-                  border-radius: 50%;
-                }
-
-                .status-indicator.active {
-                  background: #10b981;
-                }
-
-                .status-indicator.online {
-                  background: #10b981;
-                  animation: pulse-online 2s infinite;
-                }
-
-                .status-indicator.away {
-                  background: #f59e0b;
-                }
-
-                @keyframes pulse-online {
-                  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-                  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-                  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-                }
-
-                .user-info {
-                  display: flex;
-                  flex-direction: column;
-                }
-
-                .user-name {
-                  font-weight: 700;
-                  color: #1f2937;
-                  font-size: 1rem;
-                  line-height: 1.2;
-                }
-
-                .user-role {
-                  font-size: 0.85rem;
-                  color: #6b7280;
-                  text-transform: capitalize;
-                  font-weight: 500;
-                }
-
-                .performance-badge {
-                  display: flex;
-                  align-items: center;
-                  gap: 4px;
-                  padding: 4px 8px;
-                  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-                  color: #16a34a;
-                  border-radius: 6px;
-                  font-size: 0.8rem;
-                  font-weight: 600;
-                }
-
-                /* Transaction Stats */
-                .transaction-stats {
-                  margin-bottom: 16px;
-                }
-
-                .stat-row {
-                  display: grid;
-                  grid-template-columns: 1fr 1fr;
-                  gap: 12px;
-                  margin-bottom: 12px;
-                }
-
-                .stat-item {
-                  display: flex;
-                  align-items: center;
-                  gap: 8px;
-                  padding: 8px;
-                  border-radius: 8px;
-                  transition: all 0.2s ease;
-                }
-
-                .stat-item.inward {
-                  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-                }
-
-                .stat-item.outward {
-                  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-                }
-
-                .stat-item .stat-icon {
-                  width: 24px;
-                  height: 24px;
-                  border-radius: 4px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-size: 1rem;
-                }
-
-                .stat-item.inward .stat-icon {
-                  background: #1d4ed8;
-                  color: white;
-                }
-
-                .stat-item.outward .stat-icon {
-                  background: #16a34a;
-                  color: white;
-                }
-
-                .stat-details {
-                  flex: 1;
-                  display: flex;
-                  flex-direction: column;
-                }
-
-                .stat-details .stat-number {
-                  font-size: 1.1rem;
-                  font-weight: 700;
-                  color: #1f2937;
-                  line-height: 1.2;
-                }
-
-                .stat-details .stat-label {
-                  font-size: 0.75rem;
-                  color: #6b7280;
-                  text-transform: uppercase;
-                  letter-spacing: 0.5px;
-                  font-weight: 600;
-                }
-
-                .stat-percentage {
-                  font-size: 0.8rem;
-                  font-weight: 600;
-                  color: #374151;
-                }
-
-                .transaction-bar {
-                  height: 6px;
-                  background: #e5e7eb;
-                  border-radius: 3px;
-                  overflow: hidden;
-                  display: flex;
-                }
-
-                .bar-fill {
-                  height: 100%;
-                  transition: width 0.8s ease;
-                }
-
-                .inward-fill {
-                  background: linear-gradient(90deg, #1d4ed8 0%, #3b82f6 100%);
-                }
-
-                .outward-fill {
-                  background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
-                }
-
-                /* Summary Stats */
-                .summary-stats {
-                  display: grid;
-                  grid-template-columns: 1fr 1fr;
-                  gap: 12px;
-                  padding-top: 16px;
-                  border-top: 1px solid #f1f5f9;
-                }
-
-                .summary-item {
-                  text-align: center;
-                }
-
-                .summary-label {
-                  display: block;
-                  font-size: 0.75rem;
-                  color: #6b7280;
-                  text-transform: uppercase;
-                  letter-spacing: 0.5px;
-                  font-weight: 600;
-                  margin-bottom: 4px;
-                }
-
-                .summary-value {
-                  font-size: 1rem;
-                  font-weight: 700;
-                  color: #1f2937;
-                }
-
-                /* Recent Users Grid */
-                .recent-users-grid {
-                  display: grid;
-                  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                  gap: 16px;
-                }
-
-                .recent-user-card {
-                  background: white;
-                  border: 1px solid #e2e8f0;
-                  border-radius: 12px;
-                  padding: 16px;
-                  transition: all 0.3s ease;
-                }
-
-                .recent-user-card:hover {
-                  transform: translateY(-2px);
-                  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-                  border-color: #cbd5e1;
-                }
-
-                .user-card-header {
-                  display: flex;
-                  align-items: center;
-                  gap: 12px;
-                  margin-bottom: 12px;
-                }
-
-                .user-avatar-large {
-                  position: relative;
-                  width: 44px;
-                  height: 44px;
-                  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-                  border-radius: 50%;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-                }
-
-                .user-details {
-                  flex: 1;
-                  display: flex;
-                  flex-direction: column;
-                }
-
-                .user-name-large {
-                  font-weight: 700;
-                  color: #1f2937;
-                  font-size: 0.95rem;
-                  line-height: 1.2;
-                }
-
-                .user-role-badge {
-                  font-size: 0.75rem;
-                  color: #6b7280;
-                  text-transform: capitalize;
-                  font-weight: 500;
-                  background: #f1f5f9;
-                  padding: 2px 6px;
-                  border-radius: 4px;
-                  display: inline-block;
-                  width: fit-content;
-                  margin-top: 2px;
-                }
-
-                .user-activity-info {
-                  display: flex;
-                  flex-direction: column;
-                  gap: 8px;
-                }
-
-                .activity-time {
-                  display: flex;
-                  align-items: center;
-                  gap: 6px;
-                  font-size: 0.85rem;
-                  color: #6b7280;
-                  font-weight: 500;
-                }
-
-                .activity-time svg {
-                  font-size: 1rem;
-                }
-
-                .login-details {
-                  display: flex;
-                  justify-content: space-between;
-                  font-size: 0.8rem;
-                  color: #9ca3af;
-                }
-
-                .login-date {
-                  font-weight: 500;
-                }
-
-                .login-time {
-                  font-weight: 600;
-                }
-
-                /* No Data State */
-                .no-data-state {
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  justify-content: center;
-                  padding: 60px 20px;
-                  text-align: center;
-                }
-
-                .no-data-illustration {
-                  position: relative;
-                  margin-bottom: 24px;
-                }
-
-                .no-data-icon {
-                  font-size: 4rem;
-                  color: #d1d5db;
-                  z-index: 1;
-                  position: relative;
-                }
-
-                .access-denied-badge {
-                  position: absolute;
-                  bottom: -8px;
-                  right: -8px;
-                  width: 32px;
-                  height: 32px;
-                  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-                  border-radius: 50%;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  color: white;
-                  font-size: 1rem;
-                  border: 3px solid white;
-                  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-                }
-
-                .no-data-content h3 {
-                  color: #374151;
-                  font-size: 1.3rem;
-                  font-weight: 700;
-                  margin: 0 0 8px 0;
-                }
-
-                .no-data-content p {
-                  color: #6b7280;
-                  font-size: 1rem;
-                  margin: 0 0 24px 0;
-                  max-width: 400px;
-                  line-height: 1.5;
-                }
-
-                .request-access-btn {
-                  display: flex;
-                  align-items: center;
-                  gap: 8px;
-                  padding: 12px 24px;
-                  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-                  color: white;
-                  border: none;
-                  border-radius: 10px;
-                  font-weight: 600;
-                  cursor: pointer;
-                  transition: all 0.3s ease;
-                  font-size: 1rem;
-                }
-
-                .request-access-btn:hover {
-                  transform: translateY(-2px);
-                  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
-                }
-
-                .no-data-message {
-                  text-align: center;
-                  color: #6b7280;
-                  font-style: italic;
-                  padding: 20px;
-                  background: #f9fafb;
-                  border-radius: 8px;
-                  border: 1px dashed #d1d5db;
-                }
-
-                /* Responsive Design */
-                @media (max-width: 768px) {
-                  .user-activity-header {
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 16px;
-                    padding: 20px;
-                  }
-
-                  .header-actions {
-                    align-self: stretch;
-                    justify-content: space-between;
-                  }
-
-                  .activity-filter {
-                    flex: 1;
-                  }
-
-                  .filter-btn {
-                    flex: 1;
-                    text-align: center;
-                  }
-
-                  .activity-overview {
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 12px;
-                    padding: 16px;
-                  }
-
-                  .transaction-cards {
-                    grid-template-columns: 1fr;
-                    gap: 16px;
-                  }
-
-                  .recent-users-grid {
-                    grid-template-columns: 1fr;
-                  }
-
-                  .stat-row {
-                    grid-template-columns: 1fr;
-                    gap: 8px;
-                  }
-
-                  .summary-stats {
-                    grid-template-columns: 1fr;
-                    gap: 8px;
-                  }
-                }
-
-                @media (max-width: 480px) {
-                  .activity-content {
-                    padding: 16px;
-                  }
-
-                  .activity-overview {
-                    grid-template-columns: 1fr;
-                    text-align: center;
-                  }
-
-                  .transaction-card {
-                    padding: 16px;
-                  }
-
-                  .section-header {
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 8px;
-                  }
-
-                  .activity-count {
-                    align-self: stretch;
-                    text-align: center;
-                  }
-                }
-              `}</style>
-            </div>
-
-            {/* System Stats */}
-            <div className="dashboard-section system-stats-enhanced">
-  <div className="system-stats-header">
-    <div className="header-content">
-      <div className="title-icon-wrapper">
-        <MdSettingsApplications className="section-icon" />
+            {/* Enhanced User Activity - Admin Only */}
+{user && user.role === 'Admin' && (
+  <div className="dashboard-section user-activity-enhanced">
+    <div className="user-activity-header">
+      <div className="header-content">
+        <div className="title-icon-wrapper">
+          <MdHistory className="section-icon" />
+        </div>
+        <div className="title-content">
+          <h2 className="section-title">User Activity</h2>
+          <p className="section-subtitle">Team performance and engagement metrics</p>
+        </div>
       </div>
-      <div className="title-content">
-        <h2 className="section-title">System Statistics</h2>
-        <p className="section-subtitle">Overview of users, inventory, and utilization</p>
+      <div className="header-actions">
+        <div className="activity-filter">
+          <button className="filter-btn active" data-filter="all">All</button>
+          <button className="filter-btn" data-filter="today">Today</button>
+          <button className="filter-btn" data-filter="week">Week</button>
+        </div>
+        <button className="export-btn">
+          <MdGetApp />
+        </button>
       </div>
     </div>
-  </div>
 
-  <div className="stats-content">
-    {systemStatsData ? (
-      <>
-        {/* Quick Grid Summary */}
-        <div className="stats-overview-grid">
-          <div className="stat-card users">
-            <span className="stat-card-title">Users</span>
-            <div className="stat-figures">
-              <div>
-                <span className="stat-num">{systemStatsData.users.total}</span>
-                <span className="stat-label">Total</span>
+    <div className="activity-content">
+      {userActivityData ? (
+        <>
+          {/* Activity Overview Stats */}
+          <div className="activity-overview">
+            <div className="overview-stat">
+              <div className="stat-icon transactions">
+                <MdSwapHoriz />
               </div>
-              <div>
-                <span className="stat-num success">{systemStatsData.users.active}</span>
-                <span className="stat-label">Active</span>
+              <div className="stat-content">
+                <span className="stat-number">
+                  {userActivityData.userActivity.reduce((sum, activity) => 
+                    sum + activity.inwardTransactions + activity.outwardTransactions, 0
+                  ).toLocaleString()}
+                </span>
+                <span className="stat-label">Total Transactions</span>
               </div>
-              <div>
-                <span className="stat-num muted">{systemStatsData.users.inactive}</span>
-                <span className="stat-label">Inactive</span>
+            </div>
+            
+            <div className="overview-stat">
+              <div className="stat-icon active-users">
+                <MdPeople />
+              </div>
+              <div className="stat-content">
+                <span className="stat-number">{userActivityData.recentlyActiveUsers.length}</span>
+                <span className="stat-label">Active Users</span>
+              </div>
+            </div>
+            
+            <div className="overview-stat">
+              <div className="stat-icon total-value">
+                <MdAttachMoney />
+              </div>
+              <div className="stat-content">
+                <span className="stat-number">
+                  {formatCurrency(userActivityData.userActivity.reduce((sum, activity) => 
+                    sum + (activity.totalValueHandled || 0), 0
+                  ))}
+                </span>
+                <span className="stat-label">Total Value</span>
               </div>
             </div>
           </div>
-          <div className="stat-card components">
-            <span className="stat-card-title">Components</span>
-            <div className="stat-figures">
-              <div>
-                <span className="stat-num">{systemStatsData.components.total}</span>
-                <span className="stat-label">Total</span>
-              </div>
-              <div>
-                <span className="stat-num success">{systemStatsData.components.active}</span>
-                <span className="stat-label">Active</span>
-              </div>
-              <div>
-                <span className="stat-num warning">{systemStatsData.components.obsolete}</span>
-                <span className="stat-label">Obsolete</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Storage by Category */}
-        <div className="category-section">
-          <div className="category-section-header">
-            <h3>Storage by Category</h3>
-          </div>
-          {systemStatsData.storageByCategory.length > 0 ? (
-            <ul className="category-bar-list">
-              {systemStatsData.storageByCategory.map((cat, i) => {
-                const maxQty = Math.max(...systemStatsData.storageByCategory.map(c => c.totalQuantity));
-                const percent = Math.round(100 * (cat.totalQuantity / (maxQty || 1)));
-                // Use color cycling for bars
-                const barColor = `hsl(${200 + i*38}, 66%, 53%)`;
-                return (
-                  <li className="category-bar-row" key={cat._id}>
-                    <span className="cat-label">
-                      <span className="cat-dot" style={{ background: barColor }}></span>
-                      <strong>{cat._id || 'Uncategorized'}</strong>
-                    </span>
-                    <div className="cat-bar-track">
-                      <div className="cat-bar-fill" style={{ width: `${percent}%`, background: barColor }} />
+          {/* Transaction Activity Section */}
+          <div className="activity-section">
+            <div className="section-header">
+              <div className="section-title-group">
+                <MdBarChart className="section-icon-small" />
+                <h3>Transaction Activity</h3>
+              </div>
+              <span className="activity-count">{userActivityData.userActivity.length} users</span>
+            </div>
+            
+            {userActivityData.userActivity.length > 0 ? (
+              <div className="transaction-cards">
+                {userActivityData.userActivity.map((activity, index) => {
+                  const totalTransactions = activity.inwardTransactions + activity.outwardTransactions;
+                  const inwardPercentage = totalTransactions ? (activity.inwardTransactions / totalTransactions) * 100 : 0;
+                  const outwardPercentage = totalTransactions ? (activity.outwardTransactions / totalTransactions) * 100 : 0;
+                  
+                  return (
+                    <div key={activity._id} className="transaction-card">
+                      <div className="card-header">
+                        <div className="user-profile">
+                          <div className="user-avatar">
+                            <span className="avatar-text">
+                              {activity.userName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            </span>
+                            <div className="status-indicator active"></div>
+                          </div>
+                          <div className="user-info">
+                            <span className="user-name">{activity.userName}</span>
+                            <span className="user-role">{activity.userRole}</span>
+                          </div>
+                        </div>
+                        <div className="performance-badge">
+                          <MdTrendingUp />
+                          <span>
+                            {index === 0 ? 'Top' : index === 1 ? '2nd' : index === 2 ? '3rd' : `${index + 1}th`}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="transaction-stats">
+                        <div className="stat-row">
+                          <div className="stat-item inward">
+                            <div className="stat-icon">
+                              <MdArrowDownward />
+                            </div>
+                            <div className="stat-details">
+                              <span className="stat-number">{activity.inwardTransactions}</span>
+                              <span className="stat-label">Inward</span>
+                            </div>
+                            <div className="stat-percentage">{Math.round(inwardPercentage)}%</div>
+                          </div>
+                          
+                          <div className="stat-item outward">
+                            <div className="stat-icon">
+                              <MdArrowUpward />
+                            </div>
+                            <div className="stat-details">
+                              <span className="stat-number">{activity.outwardTransactions}</span>
+                              <span className="stat-label">Outward</span>
+                            </div>
+                            <div className="stat-percentage">{Math.round(outwardPercentage)}%</div>
+                          </div>
+                        </div>
+                        
+                        <div className="transaction-bar">
+                          <div className="bar-fill inward-fill" style={{width: `${inwardPercentage}%`}}></div>
+                          <div className="bar-fill outward-fill" style={{width: `${outwardPercentage}%`}}></div>
+                        </div>
+                      </div>
+                      
+                      <div className="summary-stats">
+                        <div className="summary-item">
+                          <span className="summary-label">Total Units</span>
+                          <span className="summary-value">{activity.totalQuantityHandled?.toLocaleString() || 0}</span>
+                        </div>
+                        <div className="summary-item">
+                          <span className="summary-label">Total Value</span>
+                          <span className="summary-value">{formatCurrency(activity.totalValueHandled || 0)}</span>
+                        </div>
+                      </div>
                     </div>
-                    <span className="cat-bar-percent">
-                      {cat.totalQuantity} units
-                    </span>
-                    <span className="cat-bar-value">
-                      ({formatCurrency ? formatCurrency(cat.totalValue) : cat.totalValue.toLocaleString()})
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <div className="no-data-message">No category data.</div>
-          )}
-        </div>
-      </>
-    ) : (
-      <div className="no-data-message">System statistics not available (Admin Only).</div>
-    )}
-  </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="no-data-message">No user transaction activity found.</div>
+            )}
+          </div>
 
-  {/* --- Modern Inline CSS --- */}
-  <style>{`
-.system-stats-enhanced {
-  background: linear-gradient(135deg, #fff 0%, #fafbfc 100%);
-  border: 1.5px solid #e2e8f0;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.05);
-  padding: 0;
-  overflow: hidden;
-  position: relative;
-  margin-bottom: 10px;
-}
-.system-stats-header {
-  padding: 24px 24px 18px 24px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-}
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.title-icon-wrapper {
-  width: 48px; height: 48px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 12px #667eea33;
-}
-.section-icon { color: white; font-size: 1.5rem; }
-.title-content { display: flex; flex-direction: column; }
-.section-title { font-size: 1.3rem; font-weight: 700; color: #1f2937; margin: 0; }
-.section-subtitle { font-size: 0.92rem; color: #6b7280; margin: 4px 0 0 0; font-weight: 500;}
-
-.stats-content { padding: 24px; }
-
-/* Stats overview grid */
-.stats-overview-grid {
-  display: flex;
-  gap: 22px;
-  margin-bottom: 36px;
-  flex-wrap: wrap;
-}
-.stat-card {
-  flex: 1 1 260px;
-  min-width: 220px;
-  background: #fff;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 2px 9px #667eea17;
-  display: flex; flex-direction: column; padding: 20px; gap: 13px;
-}
-
-.stat-card.users .stat-card-title { color: #4651b4 }
-.stat-card.components .stat-card-title { color: #3dc468 }
-.stat-card-title {
-  font-size: 1.09rem;
-  letter-spacing: 0.6px;
-  font-weight: 800;
-  margin-bottom: 3px;
-}
-.stat-figures { display: flex; flex-direction: row; gap: 21px; margin-top: 2px;}
-.stat-num { font-size: 1.58rem; font-weight: 700; color: #2a2c40; }
-.stat-num.success { color: #16a34a; }
-.stat-num.warning { color: #fd9800; }
-.stat-num.muted { color: #748093; }
-.stat-label { font-size: 0.81rem; color: #8ca6c0; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;}
-.stat-figures div { text-align: center; border-right: 1px solid #e7e7ea; padding: 0 11px;}
-.stat-figures div:last-child { border-right: none; }
-
-/* Category storage section */
-.category-section { margin-top: 18px; background: #fff; border-radius: 12px; box-shadow: 0 2px 9px #8398a017; padding: 18px 14px 13px 14px; border: 1px solid #ececec;}
-.category-section-header h3 { margin: 0 0 13px 0; color: #34425b; font-size: 1.12rem; font-weight: 700; letter-spacing: 0.1px; }
-.category-bar-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 13px;}
-.category-bar-row {
-  display: flex; align-items: center; gap: 13px; margin-bottom: 0;
-  flex-wrap: wrap;
-}
-.cat-label {
-  min-width: 125px;
-  font-size: 1em;
-  color: #34426f;
-  font-weight: 600;
-  display: flex; align-items: center; gap: 8px;
-}
-.cat-dot {
-  display: inline-block;
-  width: 13px; height: 13px;
-  border-radius: 60%;
-  border: 2.2px solid #fff;
-  margin-right: 2px;
-  box-shadow: 0 0.5px 3px rgba(0,0,0,0.05)
-}
-.cat-bar-track { background: #f0f4fa; width: 100%; height: 13px; border-radius: 7px; overflow: hidden; position: relative; margin: 0 3px;}
-.cat-bar-fill {
-  height: 100%;
-  border-radius: 7px;
-  min-width: 4%;
-  transition: width 0.6s;
-  max-width: 100%;
-  box-shadow: 0 1px 6px #8aeaff25 inset;
-}
-.cat-bar-percent {
-  min-width: 82px;
-  font-size: .99em;
-  color: #283040;
-  font-weight: 500;
-}
-.cat-bar-value {
-  font-size: 0.96em;
-  color: #535e7c;
-  padding-left: 3px;
-}
-.no-data-message {
-  font-size: 1.02em;
-  line-height: 1.8;
-  background: #f5f7fa;
-  border: 1.3px dashed #e4e8f3;
-  border-radius: 9px;
-  color: #7a8499;
-  padding: 21px 0;
-  text-align: center;
-  margin-top: 12px;
-}
-
-@media (max-width: 900px) {
-  .stats-content { padding: 12px 0; }
-  .stats-overview-grid { flex-direction: column; gap: 16px;}
-  .stat-card { padding: 13px 7px; }
-  .category-section { padding: 10px 5px 7px 8px;}
-  .cat-label { min-width: 80px;}
-}
-@media (max-width: 600px) {
-  .section-title, .title-content h2 { font-size: 1.1rem; }
-  .cat-label { min-width: 52px; font-size: 0.92rem;}
-  .stats-content { padding: 5px 2px; }
-}
-  `}</style>
+          {/* Recently Active Users Section */}
+          <div className="activity-section">
+            <div className="section-header">
+              <div className="section-title-group">
+                <MdAccessTime className="section-icon-small" />
+                <h3>Recently Active Users</h3>
+              </div>
+              <span className="activity-count">{userActivityData.recentlyActiveUsers.length} online</span>
             </div>
+            
+            {userActivityData.recentlyActiveUsers.length > 0 ? (
+              <div className="recent-users-grid">
+                {userActivityData.recentlyActiveUsers.map(user => {
+                  const lastLogin = new Date(user.lastLogin);
+                  const now = new Date();
+                  const diffInMinutes = Math.floor((now - lastLogin) / (1000 * 60));
+                  const timeAgo = diffInMinutes < 60 ? 
+                    `${diffInMinutes}m ago` : 
+                    diffInMinutes < 1440 ? 
+                    `${Math.floor(diffInMinutes / 60)}h ago` : 
+                    `${Math.floor(diffInMinutes / 1440)}d ago`;
+                  
+                  return (
+                    <div key={user._id} className="recent-user-card">
+                      <div className="user-card-header">
+                        <div className="user-avatar-large">
+                          <span className="avatar-text">
+                            {user.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          </span>
+                          <div className={`status-indicator ${diffInMinutes < 30 ? 'online' : 'away'}`}></div>
+                        </div>
+                        <div className="user-details">
+                          <span className="user-name-large">{user.name}</span>
+                          <span className="user-role-badge">{user.role}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="user-activity-info">
+                        <div className="activity-time">
+                          <MdSchedule />
+                          <span>Last seen {timeAgo}</span>
+                        </div>
+                        <div className="login-details">
+                          <span className="login-date">{lastLogin.toLocaleDateString()}</span>
+                          <span className="login-time">{lastLogin.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="no-data-message">No recently active users found.</div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="no-data-state">
+          <div className="no-data-illustration">
+            <MdHistory className="no-data-icon" />
+            <div className="access-denied-badge">
+              <MdLock />
+            </div>
+          </div>
+          <div className="no-data-content">
+            <h3>Loading User Activity...</h3>
+            <p>Fetching user activity and performance metrics.</p>
+          </div>
+        </div>
+      )}
+    </div>
+
+    {/* Enhanced Inline CSS */}
+    <style>{`
+      .user-activity-enhanced {
+        background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        border-radius: 16px;
+        padding: 0;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+      }
+
+      .user-activity-enhanced:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+
+      .user-activity-enhanced::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #3dc47e 100%);
+      }
+
+      /* Header Styles */
+      .user-activity-header {
+        padding: 24px 24px 20px 24px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .title-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      }
+
+      .section-icon {
+        color: white;
+        font-size: 1.5rem;
+      }
+
+      .title-content {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .section-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 4px 0;
+        letter-spacing: -0.02em;
+      }
+
+      .section-subtitle {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin: 0;
+        font-weight: 500;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .activity-filter {
+        display: flex;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 2px;
+      }
+
+      .filter-btn {
+        padding: 6px 12px;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #6b7280;
+      }
+
+      .filter-btn.active {
+        background: #667eea;
+        color: white;
+        box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+      }
+
+      .filter-btn:not(.active):hover {
+        background: #f8fafc;
+        color: #374151;
+      }
+
+      .export-btn {
+        width: 36px;
+        height: 36px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #64748b;
+        transition: all 0.2s ease;
+      }
+
+      .export-btn:hover {
+        background: #e2e8f0;
+        color: #667eea;
+      }
+
+      /* Content Styles */
+      .activity-content {
+        padding: 24px;
+      }
+
+      /* Activity Overview */
+      .activity-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .overview-stat {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: white;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+      }
+
+      .overview-stat:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+      }
+
+      .stat-icon.transactions {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+
+      .stat-icon.active-users {
+        background: #dcfce7;
+        color: #16a34a;
+      }
+
+      .stat-icon.total-value {
+        background: #fef3c7;
+        color: #d97706;
+      }
+
+      .stat-content {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stat-number {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #1f2937;
+        line-height: 1.2;
+      }
+
+      .stat-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+      }
+
+      /* Activity Sections */
+      .activity-section {
+        margin-bottom: 32px;
+      }
+
+      .activity-section:last-child {
+        margin-bottom: 0;
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #f1f5f9;
+      }
+
+      .section-title-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .section-icon-small {
+        font-size: 1.2rem;
+        color: #667eea;
+      }
+
+      .section-header h3 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+      }
+
+      .activity-count {
+        font-size: 0.85rem;
+        color: #6b7280;
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-weight: 600;
+      }
+
+      /* Transaction Cards */
+      .transaction-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 20px;
+      }
+
+      .transaction-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .transaction-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        border-color: #cbd5e1;
+      }
+
+      .transaction-card::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #667eea 0%, #3dc47e 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .transaction-card:hover::before {
+        opacity: 1;
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .user-avatar {
+        position: relative;
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      }
+
+      .avatar-text {
+        color: white;
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+      }
+
+      .status-indicator {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 12px;
+        height: 12px;
+        border: 2px solid white;
+        border-radius: 50%;
+      }
+
+      .status-indicator.active {
+        background: #10b981;
+      }
+
+      .status-indicator.online {
+        background: #10b981;
+        animation: pulse-online 2s infinite;
+      }
+
+      .status-indicator.away {
+        background: #f59e0b;
+      }
+
+      @keyframes pulse-online {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+      }
+
+      .user-info {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .user-name {
+        font-weight: 700;
+        color: #1f2937;
+        font-size: 1rem;
+        line-height: 1.2;
+      }
+
+      .user-role {
+        font-size: 0.85rem;
+        color: #6b7280;
+        text-transform: capitalize;
+        font-weight: 500;
+      }
+
+      .performance-badge {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        color: #16a34a;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      /* Transaction Stats */
+      .transaction-stats {
+        margin-bottom: 16px;
+      }
+
+      .stat-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+      }
+
+      .stat-item.inward {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      }
+
+      .stat-item.outward {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      }
+
+      .stat-item .stat-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+      }
+
+      .stat-item.inward .stat-icon {
+        background: #1d4ed8;
+        color: white;
+      }
+
+      .stat-item.outward .stat-icon {
+        background: #16a34a;
+        color: white;
+      }
+
+      .stat-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stat-details .stat-number {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1f2937;
+        line-height: 1.2;
+      }
+
+      .stat-details .stat-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+      }
+
+      .stat-percentage {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #374151;
+      }
+
+      .transaction-bar {
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 3px;
+        overflow: hidden;
+        display: flex;
+      }
+
+      .bar-fill {
+        height: 100%;
+        transition: width 0.8s ease;
+      }
+
+      .inward-fill {
+        background: linear-gradient(90deg, #1d4ed8 0%, #3b82f6 100%);
+      }
+
+      .outward-fill {
+        background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
+      }
+
+      /* Summary Stats */
+      .summary-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding-top: 16px;
+        border-top: 1px solid #f1f5f9;
+      }
+
+      .summary-item {
+        text-align: center;
+      }
+
+      .summary-label {
+        display: block;
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .summary-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1f2937;
+      }
+
+      /* Recent Users Grid */
+      .recent-users-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+      }
+
+      .recent-user-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        transition: all 0.3s ease;
+      }
+
+      .recent-user-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        border-color: #cbd5e1;
+      }
+
+      .user-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .user-avatar-large {
+        position: relative;
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      }
+
+      .user-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .user-name-large {
+        font-weight: 700;
+        color: #1f2937;
+        font-size: 0.95rem;
+        line-height: 1.2;
+      }
+
+      .user-role-badge {
+        font-size: 0.75rem;
+        color: #6b7280;
+        text-transform: capitalize;
+        font-weight: 500;
+        background: #f1f5f9;
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: inline-block;
+        width: fit-content;
+        margin-top: 2px;
+      }
+
+      .user-activity-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .activity-time {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        color: #6b7280;
+        font-weight: 500;
+      }
+
+      .activity-time svg {
+        font-size: 1rem;
+      }
+
+      .login-details {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #9ca3af;
+      }
+
+      .login-date {
+        font-weight: 500;
+      }
+
+      .login-time {
+        font-weight: 600;
+      }
+
+      /* No Data State */
+      .no-data-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        text-align: center;
+      }
+
+      .no-data-illustration {
+        position: relative;
+        margin-bottom: 24px;
+      }
+
+      .no-data-icon {
+        font-size: 4rem;
+        color: #d1d5db;
+        z-index: 1;
+        position: relative;
+      }
+
+      .access-denied-badge {
+        position: absolute;
+        bottom: -8px;
+        right: -8px;
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+        border: 3px solid white;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+      }
+
+      .no-data-content h3 {
+        color: #374151;
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0 0 8px 0;
+      }
+
+      .no-data-content p {
+        color: #6b7280;
+        font-size: 1rem;
+        margin: 0 0 24px 0;
+        max-width: 400px;
+        line-height: 1.5;
+      }
+
+      .no-data-message {
+        text-align: center;
+        color: #6b7280;
+        font-style: italic;
+        padding: 20px;
+        background: #f9fafb;
+        border-radius: 8px;
+        border: 1px dashed #d1d5db;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .user-activity-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 16px;
+          padding: 20px;
+        }
+
+        .header-actions {
+          align-self: stretch;
+          justify-content: space-between;
+        }
+
+        .activity-filter {
+          flex: 1;
+        }
+
+        .filter-btn {
+          flex: 1;
+          text-align: center;
+        }
+
+        .activity-overview {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+          padding: 16px;
+        }
+
+        .transaction-cards {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+
+        .recent-users-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .stat-row {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+
+        .summary-stats {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .activity-content {
+          padding: 16px;
+        }
+
+        .activity-overview {
+          grid-template-columns: 1fr;
+          text-align: center;
+        }
+
+        .transaction-card {
+          padding: 16px;
+        }
+
+        .section-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .activity-count {
+          align-self: stretch;
+          text-align: center;
+        }
+      }
+    `}</style>
+  </div>
+)}
+
+{/* System Stats - Admin Only */}
+{user && user.role === 'Admin' && (
+  <div className="dashboard-section system-stats-enhanced">
+    <div className="system-stats-header">
+      <div className="header-content">
+        <div className="title-icon-wrapper">
+          <MdSettingsApplications className="section-icon" />
+        </div>
+        <div className="title-content">
+          <h2 className="section-title">System Statistics</h2>
+          <p className="section-subtitle">Overview of users, inventory, and utilization</p>
+        </div>
+      </div>
+    </div>
+
+    <div className="stats-content">
+      {systemStatsData ? (
+        <>
+          {/* Quick Grid Summary */}
+          <div className="stats-overview-grid">
+            <div className="stat-card users">
+              <span className="stat-card-title">Users</span>
+              <div className="stat-figures">
+                <div>
+                  <span className="stat-num">{systemStatsData.users.total}</span>
+                  <span className="stat-label">Total</span>
+                </div>
+                <div>
+                  <span className="stat-num success">{systemStatsData.users.active}</span>
+                  <span className="stat-label">Active</span>
+                </div>
+                <div>
+                  <span className="stat-num muted">{systemStatsData.users.inactive}</span>
+                  <span className="stat-label">Inactive</span>
+                </div>
+              </div>
+            </div>
+            <div className="stat-card components">
+              <span className="stat-card-title">Components</span>
+              <div className="stat-figures">
+                <div>
+                  <span className="stat-num">{systemStatsData.components.total}</span>
+                  <span className="stat-label">Total</span>
+                </div>
+                <div>
+                  <span className="stat-num success">{systemStatsData.components.active}</span>
+                  <span className="stat-label">Active</span>
+                </div>
+                <div>
+                  <span className="stat-num warning">{systemStatsData.components.obsolete}</span>
+                  <span className="stat-label">Obsolete</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Storage by Category */}
+          <div className="category-section">
+            <div className="category-section-header">
+              <h3>Storage by Category</h3>
+            </div>
+            {systemStatsData.storageByCategory.length > 0 ? (
+              <ul className="category-bar-list">
+                {systemStatsData.storageByCategory.map((cat, i) => {
+                  const maxQty = Math.max(...systemStatsData.storageByCategory.map(c => c.totalQuantity));
+                  const percent = Math.round(100 * (cat.totalQuantity / (maxQty || 1)));
+                  // Use color cycling for bars
+                  const barColor = `hsl(${200 + i*38}, 66%, 53%)`;
+                  return (
+                    <li className="category-bar-row" key={cat._id}>
+                      <span className="cat-label">
+                        <span className="cat-dot" style={{ background: barColor }}></span>
+                        <strong>{cat._id || 'Uncategorized'}</strong>
+                      </span>
+                      <div className="cat-bar-track">
+                        <div className="cat-bar-fill" style={{ width: `${percent}%`, background: barColor }} />
+                      </div>
+                      <span className="cat-bar-percent">
+                        {cat.totalQuantity} units
+                      </span>
+                      <span className="cat-bar-value">
+                        ({formatCurrency ? formatCurrency(cat.totalValue) : cat.totalValue.toLocaleString()})
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="no-data-message">No category data.</div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="no-data-message">Loading system statistics...</div>
+      )}
+    </div>
+
+    {/* --- Modern Inline CSS --- */}
+    <style>{`
+      .system-stats-enhanced {
+        background: linear-gradient(135deg, #fff 0%, #fafbfc 100%);
+        border: 1.5px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        padding: 0;
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 10px;
+      }
+      .system-stats-header {
+        padding: 24px 24px 18px 24px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+      }
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .title-icon-wrapper {
+        width: 48px; height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 12px #667eea33;
+      }
+      .section-icon { color: white; font-size: 1.5rem; }
+      .title-content { display: flex; flex-direction: column; }
+      .section-title { font-size: 1.3rem; font-weight: 700; color: #1f2937; margin: 0; }
+      .section-subtitle { font-size: 0.92rem; color: #6b7280; margin: 4px 0 0 0; font-weight: 500;}
+
+      .stats-content { padding: 24px; }
+
+      /* Stats overview grid */
+      .stats-overview-grid {
+        display: flex;
+        gap: 22px;
+        margin-bottom: 36px;
+        flex-wrap: wrap;
+      }
+      .stat-card {
+        flex: 1 1 260px;
+        min-width: 220px;
+        background: #fff;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 2px 9px #667eea17;
+        display: flex; flex-direction: column; padding: 20px; gap: 13px;
+      }
+
+      .stat-card.users .stat-card-title { color: #4651b4 }
+      .stat-card.components .stat-card-title { color: #3dc468 }
+      .stat-card-title {
+        font-size: 1.09rem;
+        letter-spacing: 0.6px;
+        font-weight: 800;
+        margin-bottom: 3px;
+      }
+      .stat-figures { display: flex; flex-direction: row; gap: 21px; margin-top: 2px;}
+      .stat-num { font-size: 1.58rem; font-weight: 700; color: #2a2c40; }
+      .stat-num.success { color: #16a34a; }
+      .stat-num.warning { color: #fd9800; }
+      .stat-num.muted { color: #748093; }
+      .stat-label { font-size: 0.81rem; color: #8ca6c0; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;}
+      .stat-figures div { text-align: center; border-right: 1px solid #e7e7ea; padding: 0 11px;}
+      .stat-figures div:last-child { border-right: none; }
+
+      /* Category storage section */
+      .category-section { margin-top: 18px; background: #fff; border-radius: 12px; box-shadow: 0 2px 9px #8398a017; padding: 18px 14px 13px 14px; border: 1px solid #ececec;}
+      .category-section-header h3 { margin: 0 0 13px 0; color: #34425b; font-size: 1.12rem; font-weight: 700; letter-spacing: 0.1px; }
+      .category-bar-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 13px;}
+      .category-bar-row {
+        display: flex; align-items: center; gap: 13px; margin-bottom: 0;
+        flex-wrap: wrap;
+      }
+      .cat-label {
+        min-width: 125px;
+        font-size: 1em;
+        color: #34426f;
+        font-weight: 600;
+        display: flex; align-items: center; gap: 8px;
+      }
+      .cat-dot {
+        display: inline-block;
+        width: 13px; height: 13px;
+        border-radius: 60%;
+        border: 2.2px solid #fff;
+        margin-right: 2px;
+        box-shadow: 0 0.5px 3px rgba(0,0,0,0.05)
+      }
+      .cat-bar-track { background: #f0f4fa; width: 100%; height: 13px; border-radius: 7px; overflow: hidden; position: relative; margin: 0 3px;}
+      .cat-bar-fill {
+        height: 100%;
+        border-radius: 7px;
+        min-width: 4%;
+        transition: width 0.6s;
+        max-width: 100%;
+        box-shadow: 0 1px 6px #8aeaff25 inset;
+      }
+      .cat-bar-percent {
+        min-width: 82px;
+        font-size: .99em;
+        color: #283040;
+        font-weight: 500;
+      }
+      .cat-bar-value {
+        font-size: 0.96em;
+        color: #535e7c;
+        padding-left: 3px;
+      }
+      .no-data-message {
+        font-size: 1.02em;
+        line-height: 1.8;
+        background: #f5f7fa;
+        border: 1.3px dashed #e4e8f3;
+        border-radius: 9px;
+        color: #7a8499;
+        padding: 21px 0;
+        text-align: center;
+        margin-top: 12px;
+      }
+
+      @media (max-width: 900px) {
+        .stats-content { padding: 12px 0; }
+        .stats-overview-grid { flex-direction: column; gap: 16px;}
+        .stat-card { padding: 13px 7px; }
+        .category-section { padding: 10px 5px 7px 8px;}
+        .cat-label { min-width: 80px;}
+      }
+      @media (max-width: 600px) {
+        .section-title, .title-content h2 { font-size: 1.1rem; }
+        .cat-label { min-width: 52px; font-size: 0.92rem;}
+        .stats-content { padding: 5px 2px; }
+      }
+    `}</style>
+  </div>
+)}
+
 
 
             
@@ -3599,28 +3623,44 @@ body, #root, .dashboard-root {
 function SmartAssessmentCSS() {
   return (
     <style>{`
+/* ========================================= */
+/* ===== SMART ASSESSMENT MODAL STYLES ===== */
+/* ========================================= */
+
+/* Using global variables defined in src/index.css and App.css for consistency */
+/* --primary-blue, --light-blue, --text-dark, --text-light, --bg-light, --bg-white, --border-light, --shadow-light */
+/* Additionally: --primary, --danger, --success, --warning from App.css root */
+
 /* ========== SMART ASSESSMENT BUTTON ========== */
 .smart-assessment-btn {
-  background: linear-gradient(135deg, #ffd700 0%, #ffe695 50%, #ffed4e 100%);
-  color: #2d3748;
+  /* Colors & Background */
+  background: linear-gradient(135deg, #FFD700 0%, #FFED4E 100%); /* Gold/Yellow gradient for prominence */
+  color: #2d3748; /* Dark text for contrast on yellow */
   border: none;
-  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.25);
-  font-weight: 700;
-  font-size: 1.1rem;
+  
+  /* Spacing & Layout */
   padding: 12px 24px 12px 20px;
   border-radius: 12px;
-  cursor: pointer;
-  margin-left: var(--spacing-lg);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 8px; /* Space between icon and text */
+  position: relative; /* For shimmer effect */
+  overflow: hidden; /* For shimmer effect */
+  margin-left: 20px; /* Using explicit px for clarity if --spacing-lg isn't defined globally */
+
+  /* Typography */
+  font-weight: 700;
+  font-size: 1.1rem;
   letter-spacing: 0.02em;
-  position: relative;
-  overflow: hidden;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle text shadow */
+
+  /* Interactivity & Transitions */
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transition */
+  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.25); /* Initial shadow */
 }
 
+/* Shimmer effect for button */
 .smart-assessment-btn::before {
   content: '';
   position: absolute;
@@ -3629,38 +3669,38 @@ function SmartAssessmentCSS() {
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.6s ease;
+  transition: left 0.6s ease; /* Smooth shimmer movement */
 }
 
 .smart-assessment-btn:hover::before {
-  left: 100%;
+  left: 100%; /* Move shimmer across */
 }
 
 .smart-assessment-btn:hover {
-  box-shadow: 0 6px 24px rgba(255, 215, 0, 0.4);
-  transform: translateY(-2px);
-  filter: brightness(1.05);
+  box-shadow: 0 6px 24px rgba(255, 215, 0, 0.4); /* Enhanced shadow on hover */
+  transform: translateY(-2px); /* Slight lift effect */
+  filter: brightness(1.05); /* Slightly brighter on hover */
 }
 
 .smart-assessment-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  transform: translateY(0); /* Press down effect */
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3); /* Reduced shadow on active */
 }
 
 /* ========== MODAL BACKGROUND ========== */
 .smart-assessment-modal-bg {
-  position: fixed;
-  z-index: 9999;
+  position: fixed; /* Fixed position for overlay */
+  z-index: 9999; /* Ensure it's on top of everything */
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.5); /* Slightly darker overlay for better contrast */
+  backdrop-filter: blur(5px); /* Stronger blur for modern look */
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: modalBgFadeIn 0.3s ease-out;
+  animation: modalBgFadeIn 0.3s ease-out forwards; /* Keep final state */
 }
 
 @keyframes modalBgFadeIn {
@@ -3670,25 +3710,25 @@ function SmartAssessmentCSS() {
   }
   to {
     opacity: 1;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(5px);
   }
 }
 
 /* ========== MODAL CONTAINER ========== */
 .smart-assessment-modal {
-  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
-  padding: 24px 28px 20px 28px;
-  border-radius: 20px;
-  min-width: 400px;
+  background: linear-gradient(135deg, var(--bg-white) 0%, #FAFAFC 100%); /* White to very light grey gradient */
+  padding: 28px 32px 24px 32px; /* Consistent padding */
+  border-radius: 20px; /* Significantly rounded corners for modern modal */
+  min-width: 450px; /* Slightly larger min-width */
   max-width: 90vw;
   max-height: 85vh;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2); /* Deeper shadow for modal */
   display: flex;
   flex-direction: column;
-  animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; /* Smooth entry animation */
+  border: 1px solid rgba(255, 255, 255, 0.4); /* Softer white border */
   position: relative;
-  overflow: hidden;
+  overflow: hidden; /* Hide any overflow from content/header */
 }
 
 .smart-assessment-modal::before {
@@ -3697,14 +3737,15 @@ function SmartAssessmentCSS() {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #ffd700 0%, #667eea 50%, #3dc47e 100%);
+  height: 5px; /* Thicker accent line */
+  background: linear-gradient(90deg, #FFD700 0%, var(--primary-blue) 50%, var(--success) 100%); /* Vibrant gradient accent */
+  z-index: 1; /* Ensure it's above internal content */
 }
 
 @keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: scale(0.9) translateY(-20px);
+    transform: scale(0.95) translateY(-30px); /* Slightly more pronounced slide-in */
   }
   to {
     opacity: 1;
@@ -3714,72 +3755,75 @@ function SmartAssessmentCSS() {
 
 /* ========== MODAL HEADER ========== */
 .smart-assessment-modal-header {
-  font-size: 1.3rem;
+  font-size: 1.4rem; /* Slightly larger header font */
   font-weight: 700;
-  color: #1f2937;
+  color: var(--text-dark); /* Darker text for header */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f1f5f9;
+  margin-bottom: 20px; /* More space below header */
+  padding-bottom: 15px; /* More space for bottom border */
+  border-bottom: 2px solid var(--border-light); /* Consistent border style */
   letter-spacing: -0.02em;
 }
 
 .smart-assessment-modal-header svg {
-  margin-right: 10px;
-  font-size: 1.5rem;
-  filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3));
+  margin-right: 12px; /* More space for icon */
+  font-size: 1.6rem; /* Larger icon */
+  color: #FFD700; /* Icon color matching button accent */
+  filter: drop-shadow(0 3px 6px rgba(255, 215, 0, 0.4)); /* Stronger drop shadow for icon */
 }
 
 .smart-assessment-close {
-  font-size: 1.8rem;
+  font-size: 2rem; /* Larger close icon */
   cursor: pointer;
-  margin-left: 20px;
-  color: #9ca3af;
+  margin-left: 25px; /* More space from title */
+  color: var(--text-light); /* Lighter grey for subtle appearance */
   font-weight: 400;
   transition: all 0.3s ease;
-  width: 36px;
-  height: 36px;
+  width: 40px; /* Larger hit area */
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 50%; /* Circular close button */
   background: transparent;
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .smart-assessment-close:hover {
-  color: #ef4444;
-  background: #fef2f2;
-  transform: scale(1.1);
+  color: var(--danger); /* Red on hover */
+  background: #FEF2F2; /* Light red background on hover */
+  transform: scale(1.15); /* More pronounced hover scale */
 }
 
 /* ========== MODAL BODY ========== */
 .smart-assessment-modal-body {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: auto; /* Enable scrolling for content */
   min-height: 100px;
-  font-size: 1.1rem;
-  line-height: 1.6;
-  padding-right: 4px;
+  font-size: 1rem; /* Base font size, slightly adjusted */
+  line-height: 1.7; /* Increased line height for readability */
+  padding-right: 10px; /* Space for scrollbar */
+  color: var(--text-dark); /* Consistent text color */
 }
 
 .smart-assessment-modal-body::-webkit-scrollbar {
-  width: 6px;
+  width: 8px; /* Slightly wider scrollbar */
 }
 
 .smart-assessment-modal-body::-webkit-scrollbar-track {
-  background: #f8fafc;
-  border-radius: 3px;
+  background: var(--bg-light); /* Light background for track */
+  border-radius: 4px;
 }
 
 .smart-assessment-modal-body::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+  background: #CBD5E1; /* Light grey thumb */
+  border-radius: 4px;
 }
 
 .smart-assessment-modal-body::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #94A3B8; /* Darker grey on hover */
 }
 
 /* ========== LOADING STATE ========== */
@@ -3788,20 +3832,20 @@ function SmartAssessmentCSS() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
-  color: #667eea;
+  padding: 50px 20px; /* More vertical padding */
+  color: var(--primary-blue); /* Consistent blue */
   text-align: center;
   font-weight: 600;
-  font-size: 1.1rem;
-  gap: 16px;
+  font-size: 1.15rem; /* Slightly larger font */
+  gap: 18px; /* More space between elements */
 }
 
 .assessment-loader::before {
   content: '';
-  width: 40px;
-  height: 40px;
-  border: 3px solid #667eea20;
-  border-top: 3px solid #667eea;
+  width: 50px; /* Larger spinner */
+  height: 50px;
+  border: 4px solid rgba(102, 126, 234, 0.2); /* Thicker border with blue tint */
+  border-top: 4px solid var(--primary-blue); /* Primary blue top border */
   border-radius: 50%;
   animation: assessmentSpin 1s linear infinite;
 }
@@ -3812,10 +3856,10 @@ function SmartAssessmentCSS() {
 }
 
 .dot-anim {
-  letter-spacing: 3px;
-  font-size: 1.3rem;
+  letter-spacing: 4px; /* More pronounced dot spacing */
+  font-size: 1.4rem; /* Larger dots */
   animation: dotBlink 1.5s ease-in-out infinite;
-  color: #ffd700;
+  color: #FFD700; /* Gold color for dots */
   font-weight: 700;
 }
 
@@ -3827,23 +3871,24 @@ function SmartAssessmentCSS() {
 
 /* ========== ERROR STATE ========== */
 .assessment-error {
-  color: #dc2626;
-  background: linear-gradient(135deg, #fef2f2 0%, #fff5f5 100%);
-  border: 1px solid #fecaca;
-  border-radius: 12px;
+  color: var(--danger); /* Consistent red color */
+  background: linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%); /* Light red gradient */
+  border: 1px solid #FECACA; /* Red border */
+  border-radius: 12px; /* Consistent border radius */
   text-align: center;
-  padding: 20px 16px;
+  padding: 24px 20px; /* More padding */
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.1);
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.15); /* Stronger error shadow */
+  font-size: 1rem;
 }
 
-/* ========== SUCCESS STATE ========== */
+/* ========== SUCCESS STATE (Assessment Report) ========== */
 .assessment-report-beautify {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border: 1px solid #fde68a;
-  border-radius: 16px;
-  padding: 24px 20px 16px 28px;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.1);
+  background: linear-gradient(135deg, #FFFBEB 0%, #FDF3C7 100%); /* Light yellow/orange gradient */
+  border: 1px solid #FDE68A; /* Orange border */
+  border-radius: 18px; /* More rounded corners */
+  padding: 28px 24px 20px 32px; /* Adjusted padding */
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15); /* Stronger success shadow */
   position: relative;
 }
 
@@ -3854,165 +3899,212 @@ function SmartAssessmentCSS() {
   left: 0;
   width: 6px;
   height: 100%;
-  background: linear-gradient(180deg, #ffd700 0%, #f59e0b 100%);
-  border-radius: 16px 0 0 16px;
+  background: linear-gradient(180deg, #FFD700 0%, #F59E0B 100%); /* Gold to orange gradient stripe */
+  border-radius: 18px 0 0 18px; /* Matches container border-radius */
 }
 
 .assessment-title {
   font-weight: 700;
-  color: #1f2937;
-  font-size: 1.25rem;
-  margin-bottom: 16px;
+  color: #1F2937; /* Darker heading text */
+  font-size: 1.4rem; /* Larger title */
+  margin-bottom: 18px;
   text-align: left;
   letter-spacing: -0.02em;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #fde68a;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #FDE68A; /* Matching border color */
 }
 
 .assessment-section-label {
   font-weight: 700;
-  font-size: 1.1rem;
-  color: #374151;
-  margin: 20px 0 12px 0;
+  font-size: 1.15rem; /* Slightly larger section labels */
+  color: #374151; /* Darker text */
+  margin: 24px 0 14px 0; /* More spacing */
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 8px;
-  border-left: 4px solid;
+  gap: 10px; /* More space for icon */
+  padding: 10px 15px; /* More padding */
+  background: rgba(255, 255, 255, 0.7); /* Slightly more opaque background */
+  border-radius: 10px; /* More rounded */
+  border-left: 5px solid; /* Thicker left border */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Subtle shadow on labels */
 }
 
-.assessment-section-label:nth-of-type(1) { border-left-color: #ef4444; }
-.assessment-section-label:nth-of-type(2) { border-left-color: #f59e0b; }
-.assessment-section-label:nth-of-type(3) { border-left-color: #10b981; }
+/* Dynamic border-left-color for labels */
+.assessment-section-label:nth-of-type(1) { border-left-color: var(--danger); } /* Red */
+.assessment-section-label:nth-of-type(2) { border-left-color: var(--warning); } /* Orange */
+.assessment-section-label:nth-of-type(3) { border-left-color: var(--success); } /* Green */
+/* Additional types could be added with more specific colors */
 
 .assessment-ul {
-  padding-left: 20px;
-  margin: 0 0 16px 0;
+  padding-left: 25px; /* Increased indent */
+  margin: 0 0 18px 0;
   font-size: 1rem;
-  list-style: none;
+  list-style: none; /* Remove default bullets */
 }
 
 .assessment-list-item {
-  margin: 0 0 12px 0;
-  line-height: 1.6;
-  color: #374151;
+  margin: 0 0 14px 0; /* More space between list items */
+  line-height: 1.7; /* Consistent line height */
+  color: #374151; /* Darker text */
   font-size: 1rem;
   letter-spacing: 0.01em;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 10px 15px; /* More padding */
+  border-radius: 10px; /* More rounded */
   transition: all 0.2s ease;
   position: relative;
-  padding-left: 32px;
+  padding-left: 35px; /* Space for custom bullet */
+  background: rgba(255, 255, 255, 0.5); /* Subtle background for items */
 }
 
 .assessment-list-item::before {
   content: '•';
   position: absolute;
-  left: 12px;
-  color: #6b7280;
+  left: 15px; /* Adjusted position */
+  color: #6b7280; /* Consistent bullet color */
   font-weight: 700;
-  font-size: 1.2rem;
+  font-size: 1.3rem; /* Larger bullet */
 }
 
 .assessment-list-item:hover {
-  background: rgba(255, 255, 255, 0.8);
-  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.9); /* More opaque on hover */
+  transform: translateX(5px); /* More pronounced slide effect */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); /* Subtle shadow on hover */
 }
 
 .assessment-highlight {
-  color: #dc2626;
-  background: linear-gradient(135deg, #fef2f2 0%, #fff5f5 100%);
-  border: 1px solid #fecaca;
-  border-radius: 8px;
+  color: var(--danger); /* Consistent red */
+  background: linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%); /* Light red gradient */
+  border: 1px solid #FECACA; /* Red border */
+  border-radius: 10px; /* More rounded */
   font-weight: 700;
-  padding: 12px 16px;
-  margin: 8px 0;
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+  padding: 14px 18px; /* More padding */
+  margin: 10px 0;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.15); /* Stronger shadow */
+  line-height: 1.5;
 }
 
 .assessment-highlight::before {
   content: '⚠️';
-  margin-right: 8px;
+  margin-right: 10px; /* More space for icon */
 }
 
 .assessment-warn {
-  color: #d97706;
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border: 1px solid #fde68a;
-  border-radius: 8px;
+  color: var(--warning); /* Consistent orange */
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); /* Light yellow/orange gradient */
+  border: 1px solid #FDE68A; /* Orange border */
+  border-radius: 10px; /* More rounded */
   font-weight: 600;
-  padding: 12px 16px;
-  margin: 8px 0;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+  padding: 14px 18px; /* More padding */
+  margin: 10px 0;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.15); /* Stronger shadow */
+  line-height: 1.5;
 }
 
 .assessment-warn::before {
   content: '⚡';
-  margin-right: 8px;
+  margin-right: 10px; /* More space for icon */
 }
 
 .assessment-info {
-  color: #6b7280;
+  color: var(--text-light); /* Lighter info text */
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 25px; /* More space */
   font-style: italic;
-  font-size: 1.1rem;
+  font-size: 1.05rem; /* Slightly larger */
 }
 
 /* ========== RESPONSIVE DESIGN ========== */
 @media (max-width: 900px) {
   .smart-assessment-btn {
     margin-left: 0;
-    margin-top: 12px;
+    margin-top: 15px; /* More space */
     width: 100%;
     justify-content: center;
+  }
+  .smart-assessment-modal {
+    min-width: unset; /* Allow shrinking */
+    width: 95vw;
+    margin: 20px;
+    padding: 20px;
   }
 }
 
 @media (max-width: 600px) {
   .smart-assessment-modal {
-    min-width: 95vw;
-    max-width: 95vw;
-    padding: 16px 20px 12px 20px;
-    margin: 20px;
+    padding: 16px 18px 12px 18px; /* Reduced padding */
+    border-radius: 16px; /* Slightly less rounded */
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
   }
   
   .smart-assessment-modal-header {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
   }
   
   .smart-assessment-close {
     position: absolute;
-    top: 16px;
-    right: 16px;
+    top: 12px;
+    right: 12px;
     margin: 0;
+    width: 32px;
+    height: 32px;
+    font-size: 1.6rem;
   }
   
   .assessment-report-beautify {
-    padding: 16px 12px 12px 20px;
+    padding: 18px 14px 14px 24px;
+    border-radius: 14px;
   }
   
+  .assessment-title {
+    font-size: 1.2rem;
+    margin-bottom: 14px;
+  }
+
+  .assessment-section-label {
+    font-size: 1.05rem;
+    padding: 8px 10px;
+    margin: 18px 0 10px 0;
+  }
+  
+  .assessment-ul {
+    padding-left: 18px;
+  }
+
   .assessment-list-item {
-    padding: 6px 8px 6px 24px;
+    padding: 6px 10px 6px 28px;
     font-size: 0.95rem;
   }
-}
 
-/* ========== ANIMATIONS ========== */
-@keyframes shimmer {
-  0% { background-position: -468px 0; }
-  100% { background-position: 468px 0; }
-}
+  .assessment-list-item::before {
+    left: 10px;
+    font-size: 1.1rem;
+  }
 
-.assessment-loader {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 400% 100%;
-  animation: shimmer 1.5s infinite;
+  .assessment-highlight, .assessment-warn {
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .assessment-loader {
+    padding: 30px 10px;
+    font-size: 1rem;
+    gap: 12px;
+  }
+
+  .assessment-loader::before {
+    width: 35px;
+    height: 35px;
+    border-width: 3px;
+  }
+
+  .dot-anim {
+    font-size: 1.1rem;
+  }
 }
 
 /* ========== PRINT STYLES ========== */
@@ -4021,20 +4113,29 @@ function SmartAssessmentCSS() {
     position: static;
     background: none;
     backdrop-filter: none;
+    display: block;
   }
   
   .smart-assessment-modal {
     box-shadow: none;
     border: 1px solid #000;
-    max-width: 100%;
-    max-height: none;
+    max-width: 100% !important;
+    max-height: none !important;
+    padding: 15px !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
   }
   
   .smart-assessment-close {
     display: none;
   }
+  .smart-assessment-modal::before {
+    height: 2px !important; /* Thinner line for print */
+  }
+  .smart-assessment-modal-body::-webkit-scrollbar {
+    width: 0px; /* Hide scrollbar in print */
+  }
 }
-  
 `}</style>
   );
 }
