@@ -22,9 +22,15 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Please provide a password'],
+    required: function () { return this.isNew; },
     minlength: [6, 'Password must be at least 6 characters'],
-    select: false // Don't include password in queries by default
+    validate: {
+      validator: function (v) {
+        return !v || v.length >= 6;
+      },
+      message: 'Password must be at least 6 characters'
+    },
+    select: false
   },
   role: {
     type: String,
@@ -63,7 +69,7 @@ userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 
 // Pre-save middleware to hash password
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password')) {
     return next();
@@ -80,14 +86,14 @@ userSchema.pre('save', async function(next) {
 });
 
 // Instance method to check password
-userSchema.methods.matchPassword = async function(enteredPassword) {
+userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
 // Instance method to generate JWT token
-userSchema.methods.getSignedJwtToken = function() {
+userSchema.methods.getSignedJwtToken = function () {
   return jwt.sign(
-    { 
+    {
       id: this._id,
       email: this.email,
       role: this.role
@@ -100,10 +106,10 @@ userSchema.methods.getSignedJwtToken = function() {
 };
 
 // Static method to find user by credentials
-userSchema.statics.findByCredentials = async function(email, password) {
-  const user = await this.findOne({ 
+userSchema.statics.findByCredentials = async function (email, password) {
+  const user = await this.findOne({
     email: email.toLowerCase(),
-    isActive: true 
+    isActive: true
   }).select('+password');
 
   if (!user) {
@@ -119,12 +125,12 @@ userSchema.statics.findByCredentials = async function(email, password) {
 };
 
 // Virtual for full name display
-userSchema.virtual('displayName').get(function() {
+userSchema.virtual('displayName').get(function () {
   return `${this.name} (${this.role})`;
 });
 
 // Transform toJSON to remove sensitive data
-userSchema.methods.toJSON = function() {
+userSchema.methods.toJSON = function () {
   const userObject = this.toObject();
   delete userObject.password;
   delete userObject.resetPasswordToken;

@@ -3,80 +3,80 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
-// Generate JWT Token with default 7 days
+// Generate JWT Token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '7d',
+    expiresIn: process.env.JWT_EXPIRE || '30d',
   });
 };
 
-// Send token response (cookie optional — adjust per your frontend strategy)
+// Send token response
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user._id);
 
   const options = {
     expires: new Date(
-      Date.now() + (parseInt(process.env.JWT_COOKIE_EXPIRE, 10) || 7) * 24 * 60 * 60 * 1000
+      Date.now() + (parseInt(process.env.JWT_COOKIE_EXPIRE) || 30) * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
-    sameSite: 'lax',
   };
 
   if (process.env.NODE_ENV === 'production') {
     options.secure = true;
   }
 
-  // Send token in cookie and JSON response
-  res.status(statusCode)
-    .cookie('token', token, options)
-    .json({
-      success: true,
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        department: user.department,
-        employeeId: user.employeeId,
-        isActive: user.isActive,
-        displayName: user.displayName,
-      },
-    });
+  res.status(statusCode).cookie('token', token, options).json({
+    success: true,
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      department: user.department,
+      employeeId: user.employeeId,
+      isActive: user.isActive,
+      displayName: user.displayName
+    },
+  });
 };
 
 // @desc    Register user
 // @route   POST /api/auth/register
-// @access  Public (some roles restricted by middleware)
+// @access  Public (but role assignment restricted)
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role, employeeId, department } = req.body;
+    const { name, email, password, employeeId, department } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User with that email already exists',
+        message: 'User with that email already exists'
       });
     }
 
     // Validate password length
-    if (!password || password.length < 6) {
+    if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters',
+        message: 'Password must be at least 6 characters'
       });
     }
 
-    // Create user instance
+    // SECURITY FIX: Only allow 'User' role for self-registration
+    // Admin role can only be assigned by existing admins
+    const role = 'User'; // Force default role for all registrations
+
+    // Create user with restricted role
     const user = new User({
       name,
       email,
       password,
-      role: role || 'User',
+      role, // Always 'User' for self-registration
       employeeId,
-      department,
+      department
     });
 
     await user.save();
@@ -87,7 +87,7 @@ exports.register = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error during registration',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -99,21 +99,21 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate email & password presence
+    // Validate email & password
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide an email and password',
+        message: 'Please provide an email and password'
       });
     }
 
-    // Fetch user with password
+    // Check for user (include password in selection)
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials',
+        message: 'Invalid credentials'
       });
     }
 
@@ -121,21 +121,21 @@ exports.login = async (req, res) => {
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
-        message: 'Your account has been deactivated. Please contact administrator.',
+        message: 'Your account has been deactivated. Please contact administrator.'
       });
     }
 
-    // Verify password
+    // Check if password matches
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials',
+        message: 'Invalid credentials'
       });
     }
 
-    // Update last login date
+    // Update last login
     user.lastLogin = new Date();
     await user.save();
 
@@ -145,7 +145,151 @@ exports.login = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error during login',
-      error: error.message,
+      error: error.message
+    });
+  }
+};
+
+// @desc    Admin creates user with specific role
+// @route   POST /api/auth/admin/create-user
+// @access  Private/Admin only
+exports.adminCreateUser = async (req, res) => {
+  try {
+    const { name, email, password, role, employeeId, department } = req.body;
+
+    // Check if requesting user is admin
+    if (req.user.role !== 'Admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only administrators can create users with specific roles'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with that email already exists'
+      });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters'
+      });
+    }
+
+    // Validate role
+    const allowedRoles = ['Admin', 'User', 'Lab Technician', 'Researcher', 'Manufacturing Engineer'];
+    if (role && !allowedRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role specified'
+      });
+    }
+
+    // Create user with admin-specified role
+    const user = new User({
+      name,
+      email,
+      password,
+      role: role || 'User',
+      employeeId,
+      department
+    });
+
+    await user.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'User created successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        employeeId: user.employeeId,
+        isActive: user.isActive
+      }
+    });
+  } catch (error) {
+    console.error('Admin create user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during user creation',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Admin updates user role
+// @route   PUT /api/auth/admin/update-role/:userId
+// @access  Private/Admin only
+exports.adminUpdateUserRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+    const { userId } = req.params;
+
+    // Check if requesting user is admin
+    if (req.user.role !== 'Admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only administrators can update user roles'
+      });
+    }
+
+    // Validate role
+    const allowedRoles = ['Admin', 'User', 'Lab Technician', 'Researcher', 'Manufacturing Engineer'];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role specified'
+      });
+    }
+
+    // Find and update user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Prevent admin from changing their own role
+    if (userId === req.user.id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot change your own role'
+      });
+    }
+
+    user.role = role;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'User role updated successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        employeeId: user.employeeId,
+        isActive: user.isActive
+      }
+    });
+  } catch (error) {
+    console.error('Admin update role error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during role update',
+      error: error.message
     });
   }
 };
@@ -157,12 +301,11 @@ exports.logout = async (req, res) => {
   res.cookie('token', 'none', {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
-    sameSite: 'lax',
   });
 
   res.status(200).json({
     success: true,
-    message: 'User logged out successfully',
+    message: 'User logged out successfully'
   });
 };
 
@@ -171,57 +314,64 @@ exports.logout = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
   try {
-    // Fetch user by ID available in req.user set by auth middleware
-    const user = await User.findById(req.user.id).select('-password -resetPasswordToken -resetPasswordExpire');
+    const user = await User.findById(req.user.id);
 
     res.status(200).json({
       success: true,
-      data: user,
+      data: user
     });
   } catch (error) {
     console.error('Get me error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message,
+      error: error.message
     });
   }
 };
 
-// @desc    Update user details
+// @desc    Update user details (restricted)
 // @route   PUT /api/auth/updatedetails
 // @access  Private
 exports.updateDetails = async (req, res) => {
   try {
+    // Only allow updating certain fields, not role
     const fieldsToUpdate = {
       name: req.body.name,
-      email: req.body.email,
       department: req.body.department,
-      employeeId: req.body.employeeId,
+      employeeId: req.body.employeeId
     };
 
     // Remove undefined fields
-    Object.keys(fieldsToUpdate).forEach((key) => {
+    Object.keys(fieldsToUpdate).forEach(key => {
       if (fieldsToUpdate[key] === undefined) {
         delete fieldsToUpdate[key];
       }
     });
 
-    const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
-      new: true,
-      runValidators: true,
-    }).select('-password -resetPasswordToken -resetPasswordExpire');
+    // SECURITY: Don't allow users to update their own email or role
+    // Email changes should require verification
+    // Role changes should only be done by admin
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      fieldsToUpdate,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     res.status(200).json({
       success: true,
-      data: user,
+      data: user
     });
   } catch (error) {
     console.error('Update details error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -233,19 +383,19 @@ exports.updatePassword = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('+password');
 
-    // Verify current password
+    // Check current password
     if (!(await user.matchPassword(req.body.currentPassword))) {
       return res.status(401).json({
         success: false,
-        message: 'Password is incorrect',
+        message: 'Password is incorrect'
       });
     }
 
-    // Validate new password length
-    if (!req.body.newPassword || req.body.newPassword.length < 6) {
+    // Validate new password
+    if (req.body.newPassword.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'New password must be at least 6 characters',
+        message: 'New password must be at least 6 characters'
       });
     }
 
@@ -258,12 +408,12 @@ exports.updatePassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message,
+      error: error.message
     });
   }
 };
 
-// @desc    Forgot password - generate and send reset token
+// @desc    Forgot password
 // @route   POST /api/auth/forgotpassword
 // @access  Public
 exports.forgotPassword = async (req, res) => {
@@ -273,55 +423,57 @@ exports.forgotPassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'There is no user with that email',
+        message: 'There is no user with that email'
       });
     }
 
-    // Generate reset token
+    // Get reset token
     const resetToken = crypto.randomBytes(20).toString('hex');
 
-    // Hash token and set to user
-    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    // Hash token and set to resetPasswordToken field
+    user.resetPasswordToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
 
-    // Token expires in 10 minutes
-    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+    // Set expire
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     await user.save({ validateBeforeSave: false });
 
-    // Construct reset URL (for example, frontend handles route)
-    const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/resetpassword/${resetToken}`;
+    // Create reset url
+    const resetUrl = `${req.protocol}://${req.get(
+      'host'
+    )}/api/auth/resetpassword/${resetToken}`;
 
-    // Email message placeholder (set up nodemailer in your app)
-    const message = `You are receiving this email because you (or someone else) requested the reset of a password. Please make a PUT request to:\n\n${resetUrl}`;
+    const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
 
     try {
-      // TODO: send email using nodemailer here
+      // Here you would send email using nodemailer
+      // For now, we'll just return the reset token in development
       if (process.env.NODE_ENV === 'development') {
-        // For dev/testing, return reset token and URL in response
         return res.status(200).json({
           success: true,
           message: 'Password reset token generated',
           resetToken,
-          resetUrl,
+          resetUrl
         });
       }
 
-      // In production, just return success assuming mail sent
       res.status(200).json({
         success: true,
-        message: 'Email sent',
+        message: 'Email sent'
       });
     } catch (err) {
-      console.error('Forgot password email error:', err);
-
-      // Clear reset token/expire on failure
+      console.log(err);
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
+
       await user.save({ validateBeforeSave: false });
 
       return res.status(500).json({
         success: false,
-        message: 'Email could not be sent',
+        message: 'Email could not be sent'
       });
     }
   } catch (error) {
@@ -329,7 +481,7 @@ exports.forgotPassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -339,10 +491,12 @@ exports.forgotPassword = async (req, res) => {
 // @access  Public
 exports.resetPassword = async (req, res) => {
   try {
-    // Hash the reset token from params
-    const resetPasswordToken = crypto.createHash('sha256').update(req.params.resettoken).digest('hex');
+    // Get hashed token
+    const resetPasswordToken = crypto
+      .createHash('sha256')
+      .update(req.params.resettoken)
+      .digest('hex');
 
-    // Find user with matching token and non-expired
     const user = await User.findOne({
       resetPasswordToken,
       resetPasswordExpire: { $gt: Date.now() },
@@ -351,23 +505,22 @@ exports.resetPassword = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired password reset token',
+        message: 'Invalid token'
       });
     }
 
-    // Validate new password length
-    if (!req.body.password || req.body.password.length < 6) {
+    // Validate new password
+    if (req.body.password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters',
+        message: 'Password must be at least 6 characters'
       });
     }
 
-    // Save new password and clear reset token/expire
+    // Set new password
     user.password = req.body.password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
-
     await user.save();
 
     sendTokenResponse(user, 200, res);
@@ -376,7 +529,7 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -390,24 +543,27 @@ exports.getUsers = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 10;
     const startIndex = (page - 1) * limit;
 
-    // Build query filters
+    // Build query
     let query = {};
-
+    
+    // Filter by role
     if (req.query.role && req.query.role !== 'all') {
       query.role = req.query.role;
     }
 
+    // Filter by status
     if (req.query.status === 'active') {
       query.isActive = true;
     } else if (req.query.status === 'inactive') {
       query.isActive = false;
     }
 
+    // Search by name or email
     if (req.query.search) {
       query.$or = [
         { name: { $regex: req.query.search, $options: 'i' } },
         { email: { $regex: req.query.search, $options: 'i' } },
-        { employeeId: { $regex: req.query.search, $options: 'i' } },
+        { employeeId: { $regex: req.query.search, $options: 'i' } }
       ];
     }
 
@@ -415,14 +571,14 @@ exports.getUsers = async (req, res) => {
     const users = await User.find(query)
       .sort({ createdAt: -1 })
       .limit(limit)
-      .skip(startIndex)
-      .select('-password -resetPasswordToken -resetPasswordExpire');
+      .skip(startIndex);
 
+    // Pagination result
     const pagination = {
       current: page,
-      totalPages: Math.ceil(total / limit),
+      total: Math.ceil(total / limit),
       count: users.length,
-      totalCount: total,
+      totalCount: total
     };
 
     res.status(200).json({
@@ -430,14 +586,14 @@ exports.getUsers = async (req, res) => {
       count: users.length,
       total,
       pagination,
-      data: users,
+      data: users
     });
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -447,83 +603,67 @@ exports.getUsers = async (req, res) => {
 // @access  Private/Admin
 exports.getUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password -resetPasswordToken -resetPasswordExpire');
+    const user = await User.findById(req.params.id);
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: 'User not found'
       });
     }
 
     res.status(200).json({
       success: true,
-      data: user,
+      data: user
     });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message,
+      error: error.message
     });
   }
 };
 
-// @desc    Create user (Admin only)
+// @desc    Create user (Admin only) - Alias for adminCreateUser
 // @route   POST /api/auth/users
 // @access  Private/Admin
-exports.createUser = async (req, res) => {
-  try {
-    const user = await User.create(req.body);
-
-    res.status(201).json({
-      success: true,
-      data: user,
-    });
-  } catch (error) {
-    console.error('Create user error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message,
-    });
-  }
-};
+exports.createUser = exports.adminCreateUser;
 
 // @desc    Update user (Admin only)
 // @route   PUT /api/auth/users/:id
 // @access  Private/Admin
 exports.updateUser = async (req, res) => {
   try {
+    // Only allow admin to update user details including role
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-      select: '-password -resetPasswordToken -resetPasswordExpire',
     });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: 'User not found'
       });
     }
 
     res.status(200).json({
       success: true,
-      data: user,
+      data: user
     });
   } catch (error) {
     console.error('Update user error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message,
+      error: error.message
     });
   }
 };
 
-// @desc    Delete user (Soft delete - Admin only)
+// @desc    Delete user (Admin only)
 // @route   DELETE /api/auth/users/:id
 // @access  Private/Admin
 exports.deleteUser = async (req, res) => {
@@ -533,24 +673,32 @@ exports.deleteUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: 'User not found'
       });
     }
 
-    // Soft delete - deactivate user instead of removal
+    // Prevent admin from deleting themselves
+    if (req.params.id === req.user.id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot delete your own account'
+      });
+    }
+
+    // Soft delete - deactivate user instead of removing
     user.isActive = false;
     await user.save();
 
     res.status(200).json({
       success: true,
-      message: 'User deactivated successfully',
+      message: 'User deactivated successfully'
     });
   } catch (error) {
     console.error('Delete user error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
-      error: error.message,
+      error: error.message
     });
   }
 };

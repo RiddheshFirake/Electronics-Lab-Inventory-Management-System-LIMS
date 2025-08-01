@@ -12,7 +12,9 @@ const {
   getUser,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  adminCreateUser,        
+  adminUpdateUserRole     
 } = require('../controllers/authController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -33,6 +35,9 @@ router.get('/logout', logout);
 router.get('/me', getMe);
 router.put('/updatedetails', updateDetails);
 router.put('/updatepassword', updatePassword);
+
+router.post('/admin/create-user', adminOnly, adminCreateUser);
+router.put('/admin/update-role/:userId', adminOnly, adminUpdateUserRole);
 
 // Admin only routes for user management
 router.route('/users')

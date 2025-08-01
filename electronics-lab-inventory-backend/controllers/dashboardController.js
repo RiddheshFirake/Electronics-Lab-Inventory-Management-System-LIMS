@@ -72,44 +72,83 @@ exports.getDashboardOverview = async (req, res, next) => {
 // @desc    Get monthly transaction statistics
 // @route   GET /api/dashboard/monthly-stats
 // @access  Private (Admin, Lab Technician, Manufacturing Engineer)
-exports.getMonthlyStats = async (req, res) => {
-  try {
-    const year = parseInt(req.query.year) || new Date().getFullYear();
-    const months = parseInt(req.query.months) || 12;
+exports.getMonthlyStats = async (req, res, next) => {
+    try {
+        const numMonths = parseInt(req.query.months) || 6; // Default to last 6 months
 
-    const monthlyStats = [];
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setMonth(endDate.getMonth() - (numMonths - 1));
+        startDate.setDate(1); // Start from the first day of the start month
+        startDate.setHours(0, 0, 0, 0);
 
-    for (let i = months - 1; i >= 0; i--) {
-      const date = new Date(year, new Date().getMonth() - i, 1);
-      const month = date.getMonth() + 1;
-      const yearForMonth = date.getFullYear();
+        // Aggregate transactions by month and operation type
+        const monthlyData = await TransactionLog.aggregate([
+            {
+                $match: {
+                    transactionDate: {
+                        $gte: startDate,
+                        $lte: endDate
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: '$transactionDate' },
+                        month: { $month: '$transactionDate' }
+                    },
+                    inwardQuantity: {
+                        $sum: {
+                            $cond: [{ $eq: ['$operationType', 'inward'] }, '$quantity', 0]
+                        }
+                    },
+                    outwardQuantity: {
+                        $sum: {
+                            $cond: [{ $eq: ['$operationType', 'outward'] }, '$quantity', 0]
+                        }
+                    }
+                }
+            },
+            {
+                $sort: {
+                    '_id.year': 1,
+                    '_id.month': 1
+                }
+            }
+        ]);
 
-      const stats = await TransactionLog.getMonthlyStats(yearForMonth, month);
-      
-      monthlyStats.push({
-        month: month,
-        year: yearForMonth,
-        monthName: date.toLocaleString('default', { month: 'long' }),
-        inwardQuantity: stats.inwardQuantity || 0,
-        outwardQuantity: stats.outwardQuantity || 0,
-        inwardValue: stats.inwardValue || 0,
-        outwardValue: stats.outwardValue || 0,
-        transactionCount: stats.transactionCount || 0
-      });
+        // Format data to include all months, even if no transactions, and human-readable month names
+        const formattedData = [];
+        let currentMonth = new Date(startDate);
+
+        while (currentMonth <= endDate) {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth() + 1; // getMonth() is 0-indexed
+
+            const monthData = monthlyData.find(
+                data => data._id.year === year && data._id.month === month
+            );
+
+            formattedData.push({
+                monthName: currentMonth.toLocaleString('en-US', { month: 'short' }),
+                year: year,
+                inwardQuantity: monthData ? monthData.inwardQuantity : 0,
+                outwardQuantity: monthData ? monthData.outwardQuantity : 0,
+            });
+
+            currentMonth.setMonth(currentMonth.getMonth() + 1);
+        }
+
+        res.status(200).json({
+            success: true,
+            data: formattedData
+        });
+
+    } catch (error) {
+        console.error('Error in getMonthlyStats:', error);
+        next(error);
     }
-
-    res.status(200).json({
-      success: true,
-      data: monthlyStats
-    });
-  } catch (error) {
-    console.error('Get monthly stats error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
-    });
-  }
 };
 
 // @desc    Get daily transaction trends (last 30 days)

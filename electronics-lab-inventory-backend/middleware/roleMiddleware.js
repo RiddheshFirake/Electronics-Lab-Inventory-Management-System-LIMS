@@ -147,7 +147,7 @@ const canManageUsers = (req, res, next) => {
 
 // Check if user can access dashboard/reports
 const canAccessDashboard = (req, res, next) => {
-  const allowedRoles = ['Admin', 'Lab Technician', 'Manufacturing Engineer'];
+  const allowedRoles = ['Admin', 'User', 'Lab Technician', 'Researcher', 'Manufacturing Engineer'];
   
   if (!req.user) {
     return res.status(401).json({

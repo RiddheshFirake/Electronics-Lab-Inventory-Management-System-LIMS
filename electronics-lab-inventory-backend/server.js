@@ -12,6 +12,7 @@ const componentRoutes = require('./routes/componentRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const geminiRoutes = require('./routes/geminiRoutes');
+const assistantRoutes = require('./routes/assistantRoutes');
 
 // Import utilities
 const { startNotificationScheduler } = require('./utils/notificationUtils');
@@ -69,7 +70,6 @@ app.use(cors({
   allowedHeaders: 'Content-Type,Authorization'
 }));
 
-
 // BODY PARSING
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -80,9 +80,13 @@ app.use('/api/components', componentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationRoutes);
 
+// Personal Assistant routes (must come before other /api routes to avoid conflicts)
+app.use('/api', assistantRoutes);
+
 const ordersRoutes = require('./routes/ordersRoutes');
 app.use('/api/orders', ordersRoutes);
-  // Gemini API integration
+
+// Gemini API integration (for dashboard assessment)
 app.use('/api', geminiRoutes);
 
 // HEALTH CHECK
@@ -125,9 +129,6 @@ app.use((err, req, res, next) => {
       message: 'Duplicate field value entered'
     });
   }
-
-
-
 
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
