@@ -53,23 +53,31 @@ const prodOrigins = ['https://electroflow-iota.vercel.app'];
 // This handles both arrays and strings
 // In server.js (around line 43)
 const allowedOrigins = process.env.NODE_ENV === 'production' 
-  ? ['https://electroflow-iota.vercel.app'] // Replace with your actual Vercel domain later
+  ? ['https://electroflow-iota.vercel.app'] 
   : ['http://localhost:3000', 'http://localhost:3001'];
 
 app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (like mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
-      return callback(new Error('Not allowed by CORS'));
+      console.log(`CORS blocked origin: ${origin}`);
+      return callback(null, false); // Don't throw error, just block
     }
   },
   credentials: true,
-  methods: 'GET,POST,PUT,DELETE,OPTIONS',
-  allowedHeaders: 'Content-Type,Authorization'
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
+
+// Handle preflight requests
+app.options('*', cors());
+
 
 // BODY PARSING
 app.use(express.json({ limit: '10mb' }));
