@@ -49,10 +49,11 @@ if (process.env.NODE_ENV === 'development') {
 
 // CORS CONFIG
 const devOrigins = ['http://localhost:3000', 'http://localhost:3001'];
-const prodOrigins = ['https://your-frontend-domain.com'];
+const prodOrigins = ['https://lims-backend-api.onrender.com'];
 // This handles both arrays and strings
+// In server.js (around line 43)
 const allowedOrigins = process.env.NODE_ENV === 'production' 
-  ? ['https://your-frontend-domain.com']
+  ? ['https://lims-backend-api.onrender.com'] // Replace with your actual Vercel domain later
   : ['http://localhost:3000', 'http://localhost:3001'];
 
 app.use(cors({

@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
 
 const LandingPage = ({ onNavigateToAuth }) => {
   const [isVisible, setIsVisible] = useState(false);
-
+  const navigate = useNavigate();
   useEffect(() => {
     setIsVisible(true);
   }, []);
-
-  // Handle different auth actions
   const handleSignIn = () => {
-    if (onNavigateToAuth) {
-      onNavigateToAuth('signin'); // Pass 'signin' as parameter
-    }
+    navigate('/login');
   };
 
-  const handleSignUp = () => {
-    if (onNavigateToAuth) {
-      onNavigateToAuth('signup'); // Pass 'signup' as parameter
-    }
+  const handleStartFreeTrial = () => {
+    navigate('/register');
   };
 
   return (
@@ -40,12 +35,12 @@ const LandingPage = ({ onNavigateToAuth }) => {
             <a href="#features" className="eim-nav-link">Features</a>
             <a href="#solutions" className="eim-nav-link">Solutions</a>
             <a href="#pricing" className="eim-nav-link">Pricing</a>
-            <button 
-              className="eim-login-btn"
-              onClick={handleSignIn}
-            >
-              Sign In
-            </button>
+             <button 
+    className="eim-login-btn"
+    onClick={handleSignIn} // Update this
+  >
+    Sign In
+  </button>
           </div>
         </div>
       </nav>
@@ -80,12 +75,12 @@ const LandingPage = ({ onNavigateToAuth }) => {
             </p>
             <div className="eim-hero-actions">
               <button 
-                className="eim-cta-primary"
-                onClick={handleSignUp}
-              >
-                <span className="eim-btn-text">Start Free Trial</span>
-                <div className="eim-btn-shine"></div>
-              </button>
+    className="eim-cta-primary"
+    onClick={handleStartFreeTrial} // Update this
+  >
+    <span className="eim-btn-text">Start Free Trial</span>
+    <div className="eim-btn-shine"></div>
+  </button>
               <button className="eim-cta-secondary">
                 <span className="eim-play-icon">▶</span>
                 Watch Demo
@@ -264,11 +259,11 @@ const LandingPage = ({ onNavigateToAuth }) => {
               </div>
 
               <button 
-                className="eim-solution-cta"
-                onClick={handleSignUp}
-              >
-                Explore Solutions
-              </button>
+    className="eim-solution-cta"
+    onClick={handleStartFreeTrial} // Update this
+  >
+    Explore Solutions
+  </button>
             </div>
             <div className="eim-solutions-visual">
               <div className="eim-visual-card">
@@ -296,6 +291,7 @@ const LandingPage = ({ onNavigateToAuth }) => {
         </div>
       </section>
 
+
       {/* CTA Section */}
       <section className="eim-final-cta">
         <div className="eim-container">
@@ -303,22 +299,13 @@ const LandingPage = ({ onNavigateToAuth }) => {
             <h2>Ready to Transform Your Lab?</h2>
             <p>Join hundreds of labs already using ElectroFlow to streamline their inventory management.</p>
             <div className="eim-cta-actions">
-              <button 
-                className="eim-cta-main"
-                onClick={handleSignUp}
-              >
-                Get Started Free
-              </button>
+               <button 
+    className="eim-cta-main"
+    onClick={handleStartFreeTrial} // Update this
+  >
+    Get Started Free
+  </button>
               <span className="eim-cta-note">30-day free trial • No credit card required</span>
-            </div>
-            <div className="eim-cta-secondary-actions">
-              <span className="eim-cta-divider">Already have an account?</span>
-              <button 
-                className="eim-cta-signin"
-                onClick={handleSignIn}
-              >
-                Sign In Here
-              </button>
             </div>
           </div>
         </div>
