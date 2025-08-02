@@ -26,7 +26,7 @@ const ScanPage = () => {
   const [scanResult, setScanResult] = useState(null);
   const [formData, setFormData] = useState(null);
   const [status, setStatus] = useState('initial'); // initial, scanning, loading, success, error, duplicate-found
-  const [scanMode, setScanMode] = useState('camera'); // 'camera' or 'manual'
+  const [scanMode, setScanMode] = useState('manual'); // 'camera' or 'manual'
   const [manualBarcode, setManualBarcode] = useState('');
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
