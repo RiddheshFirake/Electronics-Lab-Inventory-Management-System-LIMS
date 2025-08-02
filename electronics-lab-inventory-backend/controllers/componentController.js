@@ -2,6 +2,90 @@ const Component = require('../models/Component');
 const TransactionLog = require('../models/TransactionLog');
 const { createLowStockNotification, createOldStockNotification } = require('../utils/notificationUtils');
 
+// NEW: Controller to simulate scanning a barcode and fetching details
+exports.scanBarcode = async (req, res) => {
+  try {
+    const { barcode } = req.body;
+
+    if (!barcode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Barcode is required'
+      });
+    }
+
+    // This is a mock implementation. In a real application, you would
+    // call a third-party API (e.g., UPC database, supplier API) here.
+    let productDetails = {};
+
+    switch (barcode) {
+      case '123456789012':
+        productDetails = {
+          componentName: 'Arduino Uno R3',
+          manufacturer: 'Arduino',
+          partNumber: 'A000066',
+          barcode: barcode,
+          description: 'The classic Arduino Uno board based on the ATmega328P microcontroller.',
+          location: 'Shelf B-1',
+          unitPrice: 200.00,
+          datasheetLink: 'https://docs.arduino.cc/resources/datasheets/A000066-datasheet.pdf',
+          category: 'Microcontrollers/Development Boards',
+          criticalLowThreshold: 5,
+          tags: ['microcontroller', 'atmega328p', 'development', 'uno']
+        };
+        break;
+      case '987654321098':
+        productDetails = {
+          componentName: '10k Ohm Resistor',
+          manufacturer: 'Vishay',
+          partNumber: '10K-RES-0805',
+          barcode: barcode,
+          description: 'Standard 10k Ohm surface-mount resistor, 0805 package.',
+          location: 'Drawer R-3',
+          unitPrice: 1.50,
+          datasheetLink: 'https://www.vishay.com/docs/20035/dcrseries.pdf',
+          category: 'Resistors',
+          criticalLowThreshold: 50,
+          tags: ['resistor', 'smd', '0805', '10kohm']
+        };
+        break;
+      case '456789012345':
+        productDetails = {
+          componentName: 'LM358 Op-Amp',
+          manufacturer: 'Texas Instruments',
+          partNumber: 'LM358DR',
+          barcode: barcode,
+          description: 'General purpose dual operational amplifier.',
+          location: 'Cabinet IC-4',
+          unitPrice: 15.00,
+          datasheetLink: 'https://www.ti.com/lit/ds/symlink/lm358.pdf',
+          category: 'Integrated Circuits (ICs)',
+          criticalLowThreshold: 10,
+          tags: ['op-amp', 'ic', 'analog']
+        };
+        break;
+      default:
+        // No match found
+        return res.status(404).json({
+          success: false,
+          message: 'No product details found for this barcode. Please enter details manually.'
+        });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: productDetails
+    });
+  } catch (error) {
+    console.error('Scan barcode error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Get all components
 // @route   GET /api/components
 // @access  Private
@@ -148,41 +232,62 @@ exports.getComponent = async (req, res) => {
   }
 };
 
-// @desc    Create new component
+// @desc    Create new component (UPDATED - Solution 1)
 // @route   POST /api/components
 // @access  Private (Admin, Lab Technician)
 exports.createComponent = async (req, res) => {
   try {
-    // Add user who created the component
-    req.body.addedBy = req.user.id;
-    req.body.lastModifiedBy = req.user.id;
-
-    const component = await Component.create(req.body);
-
+    // Add the current user ID to the component data (Solution 1)
+    const componentData = {
+      ...req.body,
+      addedBy: req.user._id || req.user.id, // Get user ID from the authenticated request
+      lastModifiedBy: req.user._id || req.user.id
+    };
+    
+    const component = new Component(componentData);
+    const savedComponent = await component.save();
+    
     // Populate the created component
-    await component.populate('addedBy', 'name email');
-    await component.populate('lastModifiedBy', 'name email');
-
+    await savedComponent.populate('addedBy', 'name email');
+    await savedComponent.populate('lastModifiedBy', 'name email');
+    
     res.status(201).json({
       success: true,
-      data: component
+      data: savedComponent,
+      message: 'Component created successfully'
     });
   } catch (error) {
     console.error('Create component error:', error);
+    
+    // Handle duplicate key error specifically
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      const value = error.keyValue[field];
+      
+      return res.status(409).json({
+        success: false,
+        message: `Component with ${field} "${value}" already exists. Please use update instead.`,
+        errorCode: 'DUPLICATE_COMPONENT',
+        duplicateField: field,
+        duplicateValue: value
+      });
+    }
+    
     res.status(500).json({
       success: false,
-      message: 'Server error',
-      error: error.message
+      message: error.message || 'Error creating component'
     });
   }
 };
 
-// @desc    Update component
+// @desc    Update component (UPDATED - Solution 1)
 // @route   PUT /api/components/:id
 // @access  Private (Admin, Lab Technician)
 exports.updateComponent = async (req, res) => {
   try {
-    let component = await Component.findById(req.params.id);
+    const { id } = req.params;
+    
+    let component = await Component.findById(id);
 
     if (!component) {
       return res.status(404).json({
@@ -190,27 +295,51 @@ exports.updateComponent = async (req, res) => {
         message: 'Component not found'
       });
     }
-
-    // Add user who modified the component
-    req.body.lastModifiedBy = req.user.id;
-
-    component = await Component.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    })
+    
+    // Add/preserve the user tracking fields (Solution 1)
+    const updateData = {
+      ...req.body,
+      lastModifiedBy: req.user._id || req.user.id, // Track who updated it
+      updatedAt: new Date()
+    };
+    
+    // Don't override addedBy if it already exists
+    if (!updateData.addedBy) {
+      delete updateData.addedBy;
+    }
+    
+    component = await Component.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true, runValidators: true }
+    )
       .populate('addedBy', 'name email')
       .populate('lastModifiedBy', 'name email');
-
+    
     res.status(200).json({
       success: true,
-      data: component
+      data: component,
+      message: 'Component updated successfully'
     });
   } catch (error) {
     console.error('Update component error:', error);
+    
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      const value = error.keyValue[field];
+      
+      return res.status(409).json({
+        success: false,
+        message: `Component with ${field} "${value}" already exists.`,
+        errorCode: 'DUPLICATE_COMPONENT',
+        duplicateField: field,
+        duplicateValue: value
+      });
+    }
+    
     res.status(500).json({
       success: false,
-      message: 'Server error',
-      error: error.message
+      message: error.message || 'Error updating component'
     });
   }
 };
@@ -624,7 +753,7 @@ exports.getLocations = async (req, res) => {
   }
 };
 
-// @desc    Bulk import components
+// @desc    Bulk import components (UPDATED - Solution 1)
 // @route   POST /api/components/bulk-import
 // @access  Private (Admin, Lab Technician)
 exports.bulkImportComponents = async (req, res) => {
@@ -647,9 +776,9 @@ exports.bulkImportComponents = async (req, res) => {
       const componentData = components[i];
 
       try {
-        // Add metadata
-        componentData.addedBy = req.user.id;
-        componentData.lastModifiedBy = req.user.id;
+        // Add metadata (Solution 1)
+        componentData.addedBy = req.user._id || req.user.id;
+        componentData.lastModifiedBy = req.user._id || req.user.id;
 
         const component = await Component.create(componentData);
         results.successful.push({
@@ -676,6 +805,91 @@ exports.bulkImportComponents = async (req, res) => {
       success: false,
       message: 'Server error',
       error: error.message
+    });
+  }
+};
+
+// Check if component exists by barcode or part number
+// Check if component exists by barcode or part number
+exports.checkComponentExists = async (req, res) => {
+  try {
+    const { barcode, partNumber } = req.query;
+    
+    console.log('Checking component exists:', { barcode, partNumber }); // Debug log
+    
+    let query = {};
+    if (barcode) {
+      query.barcode = barcode;
+    }
+    if (partNumber) {
+      query.partNumber = partNumber;
+    }
+    
+    if (Object.keys(query).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Barcode or partNumber required'
+      });
+    }
+    
+    const component = await Component.findOne(query)
+      .populate('addedBy', 'name email')
+      .populate('lastModifiedBy', 'name email');
+    
+    console.log('Found component:', component ? 'YES' : 'NO'); // Debug log
+    
+    res.json({
+      success: true,
+      exists: !!component,
+      component: component || null
+    });
+  } catch (error) {
+    console.error('Check component exists error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking component existence'
+    });
+  }
+};
+
+
+// Search components by part number or other criteria
+exports.searchComponents = async (req, res) => {
+  try {
+    const { partNumber, componentName, manufacturer } = req.query;
+    
+    let query = {};
+    
+    if (partNumber) {
+      query.partNumber = { $regex: partNumber, $options: 'i' };
+    }
+    if (componentName) {
+      query.componentName = { $regex: componentName, $options: 'i' };
+    }
+    if (manufacturer) {
+      query.manufacturer = { $regex: manufacturer, $options: 'i' };
+    }
+    
+    if (Object.keys(query).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one search parameter required'
+      });
+    }
+    
+    const components = await Component.find(query)
+      .populate('addedBy', 'name email')
+      .populate('lastModifiedBy', 'name email');
+    
+    res.json({
+      success: true,
+      data: components
+    });
+  } catch (error) {
+    console.error('Search components error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error searching components'
     });
   }
 };

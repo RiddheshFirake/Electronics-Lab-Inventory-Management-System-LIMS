@@ -14,7 +14,10 @@ const {
   getLocations,
   bulkImportComponents,
   exportComponents, 
-  getPredefinedCategories
+  searchComponents,
+  checkComponentExists,
+  getPredefinedCategories,
+  scanBarcode // NEW: Import the new controller function
 } = require('../controllers/componentController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -39,6 +42,12 @@ router.get('/locations', canViewComponents, getLocations);
 router.get('/export', canViewComponents, exportComponents);
 router.post('/bulk-import', canManageComponents, bulkImportComponents);
 router.get('/predefined-categories', canViewComponents, getPredefinedCategories);
+
+
+// NEW: Route for scanning a barcode and fetching details
+router.post('/scan', canManageComponents, scanBarcode);
+router.get('/check-exists', checkComponentExists);
+router.get('/search', searchComponents);
 
 // Main CRUD routes
 router.route('/')

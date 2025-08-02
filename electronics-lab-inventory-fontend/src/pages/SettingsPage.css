@@ -668,3 +668,258 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Add these new duplicate handling styles to your existing ScanPage.css */
+
+/* Duplicate Found State Styles */
+.duplicate-form-container {
+  width: 100%;
+  max-width: 900px;
+}
+
+.duplicate-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.duplicate-header .warning-icon {
+  font-size: 3rem;
+  color: #f59e0b;
+  margin-bottom: 12px;
+}
+
+.duplicate-header h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--scan-text-dark);
+  margin: 0 0 8px 0;
+}
+
+.duplicate-header p {
+  font-size: 1rem;
+  color: var(--scan-text-muted);
+  margin: 0;
+}
+
+/* Existing Component Info */
+.existing-component-info {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.existing-component-info h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #92400e;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.existing-details {
+  display: grid;
+  gap: 8px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #92400e;
+  font-size: 0.9rem;
+}
+
+.detail-value {
+  font-weight: 600;
+  color: #451a03;
+  font-size: 0.9rem;
+}
+
+/* Update Mode Selection */
+.update-mode-selection {
+  margin-bottom: 24px;
+}
+
+.update-mode-selection h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--scan-text-dark);
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+
+.mode-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.mode-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 2px solid var(--scan-border-light);
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.mode-button:hover {
+  border-color: var(--scan-primary-blue);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.mode-button.active {
+  border-color: var(--scan-primary-blue);
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.mode-button svg {
+  font-size: 1.5rem;
+  color: var(--scan-primary-blue);
+  flex-shrink: 0;
+}
+
+.mode-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mode-content strong {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--scan-text-dark);
+}
+
+.mode-content span {
+  font-size: 0.85rem;
+  color: var(--scan-text-muted);
+}
+
+/* Quantity Help Text */
+.quantity-help {
+  font-size: 0.8rem;
+  color: var(--scan-primary-blue);
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Form Field Disabled State */
+.details-form input:disabled,
+.details-form textarea:disabled,
+.details-form select:disabled {
+  background: #f1f5f9;
+  color: var(--scan-text-muted);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Warning Toast Styles */
+.scan-toast-notification.scan-toast-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.scan-toast-warning .scan-toast-icon {
+  color: #f59e0b;
+}
+
+.scan-toast-warning .scan-toast-progress::after {
+  background: #f59e0b;
+}
+
+/* Enhanced Success Message for Updates */
+.saved-component-details .detail-row .detail-value {
+  color: var(--scan-text-dark);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .duplicate-form-container {
+    max-width: 100%;
+  }
+  
+  .mode-buttons {
+    grid-template-columns: 1fr;
+  }
+  
+  .mode-button {
+    padding: 14px;
+  }
+  
+  .mode-button svg {
+    font-size: 1.3rem;
+  }
+  
+  .existing-component-info {
+    padding: 16px;
+  }
+  
+  .duplicate-header .warning-icon {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .existing-details {
+    display: block;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 6px 0;
+  }
+  
+  .mode-content strong {
+    font-size: 0.9rem;
+  }
+  
+  .mode-content span {
+    font-size: 0.8rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .mode-button {
+    border-width: 3px;
+  }
+  
+  .existing-component-info {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .mode-button {
+    transition: none;
+  }
+  
+  .mode-button:hover,
+  .mode-button.active {
+    transform: none;
+  }
+}
+

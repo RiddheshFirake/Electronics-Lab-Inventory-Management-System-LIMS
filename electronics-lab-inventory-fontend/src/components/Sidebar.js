@@ -49,9 +49,9 @@ const Sidebar = () => {
             color: '#9f7aea' // A purple accent
         },
         {
-            name: 'Reports',
+            name: 'Scan It',
             icon: <MdReport />,
-            path: '/app/reports',
+            path: '/app/scan-it',
             color: '#38b2ac' // A teal accent
         },
     ];

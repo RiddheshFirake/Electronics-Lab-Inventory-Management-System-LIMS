@@ -4,7 +4,7 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
 import AuthContext from '../contexts/AuthContext';
-import { MdEdit, MdCheckCircle, MdCancel, MdPersonAdd, MdSearch, MdRefresh, MdLock, MdSecurity } from 'react-icons/md';
+import { MdEdit, MdCheckCircle, MdCancel, MdPersonAdd, MdSearch, MdRefresh, MdLock, MdSecurity, MdClose, MdVisibility, MdVisibilityOff } from 'react-icons/md';
 
 const UsersPage = () => {
     const { user: currentUser } = useContext(AuthContext);
@@ -21,6 +21,22 @@ const UsersPage = () => {
     const [limit, setLimit] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [totalUsersCount, setTotalUsersCount] = useState(0);
+
+    // Add User Modal States
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [addUserForm, setAddUserForm] = useState({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        role: 'User',
+        employeeId: '',
+        department: ''
+    });
+    const [addUserErrors, setAddUserErrors] = useState({});
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isSubmittingUser, setIsSubmittingUser] = useState(false);
 
     const allowedRoles = ['Admin', 'User', 'Lab Technician', 'Researcher', 'Manufacturing Engineer'];
     const statusOptions = ['all', 'active', 'inactive'];
@@ -91,8 +107,147 @@ const UsersPage = () => {
         }
     };
 
+    // Add User Functions
     const handleAddUser = () => {
-        alert('Add User functionality not yet implemented. This would open a modal/form.');
+        setShowAddModal(true);
+        setAddUserForm({
+            name: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+            role: 'User',
+            employeeId: '',
+            department: ''
+        });
+        setAddUserErrors({});
+    };
+
+    const handleAddUserInputChange = (e) => {
+        const { name, value } = e.target;
+        setAddUserForm(prev => ({
+            ...prev,
+            [name]: value
+        }));
+        
+        // Clear specific error when user starts typing
+        if (addUserErrors[name]) {
+            setAddUserErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
+    };
+
+    const validateAddUserForm = () => {
+        const errors = {};
+
+        // Name validation
+        if (!addUserForm.name.trim()) {
+            errors.name = 'Name is required';
+        } else if (addUserForm.name.trim().length > 100) {
+            errors.name = 'Name cannot be more than 100 characters';
+        }
+
+        // Email validation
+        if (!addUserForm.email.trim()) {
+            errors.email = 'Email is required';
+        } else {
+            const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+            if (!emailRegex.test(addUserForm.email.trim())) {
+                errors.email = 'Please provide a valid email address';
+            }
+        }
+
+        // Password validation
+        if (!addUserForm.password) {
+            errors.password = 'Password is required';
+        } else if (addUserForm.password.length < 6) {
+            errors.password = 'Password must be at least 6 characters';
+        }
+
+        // Confirm password validation
+        if (!addUserForm.confirmPassword) {
+            errors.confirmPassword = 'Please confirm your password';
+        } else if (addUserForm.password !== addUserForm.confirmPassword) {
+            errors.confirmPassword = 'Passwords do not match';
+        }
+
+        // Role validation
+        if (!allowedRoles.includes(addUserForm.role)) {
+            errors.role = 'Please select a valid role';
+        }
+
+        // Employee ID validation (optional but limited length)
+        if (addUserForm.employeeId && addUserForm.employeeId.length > 20) {
+            errors.employeeId = 'Employee ID cannot be more than 20 characters';
+        }
+
+        // Department validation (optional but limited length)
+        if (addUserForm.department && addUserForm.department.length > 100) {
+            errors.department = 'Department cannot be more than 100 characters';
+        }
+
+        return errors;
+    };
+
+    const handleAddUserSubmit = async (e) => {
+        e.preventDefault();
+        
+        const errors = validateAddUserForm();
+        if (Object.keys(errors).length > 0) {
+            setAddUserErrors(errors);
+            return;
+        }
+
+        setIsSubmittingUser(true);
+        setAddUserErrors({});
+
+        try {
+            const userData = {
+                name: addUserForm.name.trim(),
+                email: addUserForm.email.trim().toLowerCase(),
+                password: addUserForm.password,
+                role: addUserForm.role,
+                ...(addUserForm.employeeId && { employeeId: addUserForm.employeeId.trim() }),
+                ...(addUserForm.department && { department: addUserForm.department.trim() })
+            };
+
+            const res = await api.post('/auth/register', userData);
+            
+            if (res.data.success) {
+                setNotification({ type: 'success', message: `User ${userData.name} added successfully!` });
+                setShowAddModal(false);
+                fetchUsers(); // Refresh the users list
+            } else {
+                setNotification({ type: 'error', message: res.data.message || 'Failed to add user.' });
+            }
+        } catch (err) {
+            console.error('Failed to add user:', err);
+            const errorMessage = err.response?.data?.message || 'Failed to add user. Please try again.';
+            
+            // Handle specific validation errors from backend
+            if (err.response?.data?.errors) {
+                setAddUserErrors(err.response.data.errors);
+            } else {
+                setNotification({ type: 'error', message: errorMessage });
+            }
+        } finally {
+            setIsSubmittingUser(false);
+        }
+    };
+
+    const handleCloseAddModal = () => {
+        setShowAddModal(false);
+        setAddUserForm({
+            name: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+            role: 'User',
+            employeeId: '',
+            department: ''
+        });
+        setAddUserErrors({});
     };
 
     useEffect(() => {
@@ -269,14 +424,14 @@ const UsersPage = () => {
                                     <table style={usersStyles.table}>
                                         <thead style={usersStyles.tableHead}>
                                             <tr>
-                                                <th style={usersStyles.tableHeader}>Name</th>
-                                                <th style={usersStyles.tableHeader}>Email</th>
-                                                <th style={usersStyles.tableHeader}>Role</th>
-                                                <th style={usersStyles.tableHeader}>Employee ID</th>
-                                                <th style={usersStyles.tableHeader}>Department</th>
-                                                <th style={usersStyles.tableHeader}>Status</th>
-                                                <th style={usersStyles.tableHeader}>Last Login</th>
-                                                <th style={usersStyles.tableHeader}>Actions</th>
+                                                <th style={usersStyles.tableHeaderName}>Name</th>
+                                                <th style={usersStyles.tableHeaderEmail}>Email</th>
+                                                <th style={usersStyles.tableHeaderRole}>Role</th>
+                                                <th style={usersStyles.tableHeaderEmployeeId}>Employee ID</th>
+                                                <th style={usersStyles.tableHeaderDepartment}>Department</th>
+                                                <th style={usersStyles.tableHeaderStatus}>Status</th>
+                                                <th style={usersStyles.tableHeaderLastLogin}>Last Login</th>
+                                                <th style={usersStyles.tableHeaderActions}>Actions</th>
                                             </tr>
                                         </thead>
                                     </table>
@@ -288,9 +443,15 @@ const UsersPage = () => {
                                             {users.length > 0 ? (
                                                 users.map((user) => (
                                                     <tr key={user._id} style={usersStyles.tableRow}>
-                                                        <td style={usersStyles.tableCell}>{user.name}</td>
-                                                        <td style={usersStyles.tableCell}>{user.email}</td>
-                                                        <td style={usersStyles.tableCell}>
+                                                        <td style={usersStyles.tableCellName}>{user.name}</td>
+                                                        <td style={usersStyles.tableCellEmail}>
+                                                            <div style={usersStyles.emailContainer}>
+                                                                <span style={usersStyles.emailText} title={user.email}>
+                                                                    {user.email}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td style={usersStyles.tableCellRole}>
                                                             {editingUserId === user._id ? (
                                                                 <select
                                                                     value={editedRole}
@@ -311,9 +472,9 @@ const UsersPage = () => {
                                                                 </span>
                                                             )}
                                                         </td>
-                                                        <td style={usersStyles.tableCell}>{user.employeeId || 'N/A'}</td>
-                                                        <td style={usersStyles.tableCell}>{user.department || 'N/A'}</td>
-                                                        <td style={usersStyles.tableCell}>
+                                                        <td style={usersStyles.tableCellEmployeeId}>{user.employeeId || 'N/A'}</td>
+                                                        <td style={usersStyles.tableCellDepartment}>{user.department || 'N/A'}</td>
+                                                        <td style={usersStyles.tableCellStatus}>
                                                             <span style={{
                                                                 ...usersStyles.statusBadge,
                                                                 ...getStatusStyle(user.isActive)
@@ -321,10 +482,10 @@ const UsersPage = () => {
                                                                 {user.isActive ? 'Active' : 'Inactive'}
                                                             </span>
                                                         </td>
-                                                        <td style={usersStyles.tableCell}>
+                                                        <td style={usersStyles.tableCellLastLogin}>
                                                             {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
                                                         </td>
-                                                        <td style={usersStyles.tableCell}>
+                                                        <td style={usersStyles.tableCellActions}>
                                                             <div style={usersStyles.actionButtons}>
                                                                 {editingUserId === user._id ? (
                                                                     <>
@@ -463,6 +624,211 @@ const UsersPage = () => {
                 </div>
             </div>
 
+            {/* Add User Modal */}
+            {showAddModal && (
+                <div style={usersStyles.modalOverlay} onClick={handleCloseAddModal}>
+                    <div style={usersStyles.modalContainer} onClick={(e) => e.stopPropagation()}>
+                        <div style={usersStyles.modalHeader}>
+                            <h2 style={usersStyles.modalTitle}>Add New User</h2>
+                            <button style={usersStyles.modalCloseButton} onClick={handleCloseAddModal}>
+                                <MdClose />
+                            </button>
+                        </div>
+                        
+                        <form onSubmit={handleAddUserSubmit} style={usersStyles.modalForm}>
+                            <div style={usersStyles.modalFormGrid}>
+                                {/* Name Field */}
+                                <div style={usersStyles.modalFormGroup}>
+                                    <label style={usersStyles.modalLabel}>Full Name *</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={addUserForm.name}
+                                        onChange={handleAddUserInputChange}
+                                        style={{
+                                            ...usersStyles.modalInput,
+                                            ...(addUserErrors.name ? usersStyles.modalInputError : {})
+                                        }}
+                                        placeholder="Enter full name"
+                                        maxLength={100}
+                                    />
+                                    {addUserErrors.name && (
+                                        <span style={usersStyles.modalErrorText}>{addUserErrors.name}</span>
+                                    )}
+                                </div>
+
+                                {/* Email Field */}
+                                <div style={usersStyles.modalFormGroup}>
+                                    <label style={usersStyles.modalLabel}>Email Address *</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={addUserForm.email}
+                                        onChange={handleAddUserInputChange}
+                                        style={{
+                                            ...usersStyles.modalInput,
+                                            ...(addUserErrors.email ? usersStyles.modalInputError : {})
+                                        }}
+                                        placeholder="Enter email address"
+                                    />
+                                    {addUserErrors.email && (
+                                        <span style={usersStyles.modalErrorText}>{addUserErrors.email}</span>
+                                    )}
+                                </div>
+
+                                {/* Password Field */}
+                                <div style={usersStyles.modalFormGroup}>
+                                    <label style={usersStyles.modalLabel}>Password *</label>
+                                    <div style={usersStyles.modalPasswordWrapper}>
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            name="password"
+                                            value={addUserForm.password}
+                                            onChange={handleAddUserInputChange}
+                                            style={{
+                                                ...usersStyles.modalPasswordInput,
+                                                ...(addUserErrors.password ? usersStyles.modalInputError : {})
+                                            }}
+                                            placeholder="Enter password (min 6 characters)"
+                                        />
+                                        <button
+                                            type="button"
+                                            style={usersStyles.modalPasswordToggle}
+                                            onClick={() => setShowPassword(!showPassword)}
+                                        >
+                                            {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
+                                        </button>
+                                    </div>
+                                    {addUserErrors.password && (
+                                        <span style={usersStyles.modalErrorText}>{addUserErrors.password}</span>
+                                    )}
+                                </div>
+
+                                {/* Confirm Password Field */}
+                                <div style={usersStyles.modalFormGroup}>
+                                    <label style={usersStyles.modalLabel}>Confirm Password *</label>
+                                    <div style={usersStyles.modalPasswordWrapper}>
+                                        <input
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            name="confirmPassword"
+                                            value={addUserForm.confirmPassword}
+                                            onChange={handleAddUserInputChange}
+                                            style={{
+                                                ...usersStyles.modalPasswordInput,
+                                                ...(addUserErrors.confirmPassword ? usersStyles.modalInputError : {})
+                                            }}
+                                            placeholder="Confirm password"
+                                        />
+                                        <button
+                                            type="button"
+                                            style={usersStyles.modalPasswordToggle}
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        >
+                                            {showConfirmPassword ? <MdVisibilityOff /> : <MdVisibility />}
+                                        </button>
+                                    </div>
+                                    {addUserErrors.confirmPassword && (
+                                        <span style={usersStyles.modalErrorText}>{addUserErrors.confirmPassword}</span>
+                                    )}
+                                </div>
+
+                                {/* Role Field */}
+                                <div style={usersStyles.modalFormGroup}>
+                                    <label style={usersStyles.modalLabel}>Role *</label>
+                                    <select
+                                        name="role"
+                                        value={addUserForm.role}
+                                        onChange={handleAddUserInputChange}
+                                        style={{
+                                            ...usersStyles.modalSelect,
+                                            ...(addUserErrors.role ? usersStyles.modalInputError : {})
+                                        }}
+                                    >
+                                        {allowedRoles.map(role => (
+                                            <option key={role} value={role}>{role}</option>
+                                        ))}
+                                    </select>
+                                    {addUserErrors.role && (
+                                        <span style={usersStyles.modalErrorText}>{addUserErrors.role}</span>
+                                    )}
+                                </div>
+
+                                {/* Employee ID Field */}
+                                <div style={usersStyles.modalFormGroup}>
+                                    <label style={usersStyles.modalLabel}>Employee ID</label>
+                                    <input
+                                        type="text"
+                                        name="employeeId"
+                                        value={addUserForm.employeeId}
+                                        onChange={handleAddUserInputChange}
+                                        style={{
+                                            ...usersStyles.modalInput,
+                                            ...(addUserErrors.employeeId ? usersStyles.modalInputError : {})
+                                        }}
+                                        placeholder="Enter employee ID (optional)"
+                                        maxLength={20}
+                                    />
+                                    {addUserErrors.employeeId && (
+                                        <span style={usersStyles.modalErrorText}>{addUserErrors.employeeId}</span>
+                                    )}
+                                </div>
+
+                                {/* Department Field */}
+                                <div style={usersStyles.modalFormGroupFull}>
+                                    <label style={usersStyles.modalLabel}>Department</label>
+                                    <input
+                                        type="text"
+                                        name="department"
+                                        value={addUserForm.department}
+                                        onChange={handleAddUserInputChange}
+                                        style={{
+                                            ...usersStyles.modalInput,
+                                            ...(addUserErrors.department ? usersStyles.modalInputError : {})
+                                        }}
+                                        placeholder="Enter department (optional)"
+                                        maxLength={100}
+                                    />
+                                    {addUserErrors.department && (
+                                        <span style={usersStyles.modalErrorText}>{addUserErrors.department}</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div style={usersStyles.modalActions}>
+                                <button 
+                                    type="button" 
+                                    style={usersStyles.modalCancelButton}
+                                    onClick={handleCloseAddModal}
+                                    disabled={isSubmittingUser}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    style={{
+                                        ...usersStyles.modalSubmitButton,
+                                        ...(isSubmittingUser ? usersStyles.modalSubmitButtonDisabled : {})
+                                    }}
+                                    disabled={isSubmittingUser}
+                                >
+                                    {isSubmittingUser ? (
+                                        <>
+                                            <div style={usersStyles.modalSubmitSpinner}></div>
+                                            Adding User...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <MdPersonAdd />
+                                            Add User
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* CSS Styles */}
             <style>{usersPageCSS}</style>
         </div>
@@ -487,8 +853,9 @@ const getStatusStyle = (isActive) => {
         : { background: '#ffebee', color: '#c62828' };
 };
 
-// Unique styles object for users page only
+// Updated styles object with modal styles added
 const usersStyles = {
+    // ... (keep all existing styles from previous version)
     // Main Layout Container - Unique to users page
     appContainer: {
         display: 'flex',
@@ -795,7 +1162,8 @@ const usersStyles = {
         zIndex: 10
     },
 
-    tableHeader: {
+    // Updated column-specific header styles with proper widths
+    tableHeaderName: {
         padding: '16px 12px',
         textAlign: 'left',
         fontSize: '0.8rem',
@@ -808,7 +1176,126 @@ const usersStyles = {
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         position: 'sticky',
         top: 0,
-        zIndex: 10
+        zIndex: 10,
+        width: '15%'
+    },
+
+    tableHeaderEmail: {
+        padding: '16px 12px',
+        textAlign: 'left',
+        fontSize: '0.8rem',
+        fontWeight: '700',
+        color: '#374151',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        borderRight: '1px solid #e2e8f0',
+        backgroundColor: '#f8fafc',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        width: '20%'
+    },
+
+    tableHeaderRole: {
+        padding: '16px 12px',
+        textAlign: 'left',
+        fontSize: '0.8rem',
+        fontWeight: '700',
+        color: '#374151',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        borderRight: '1px solid #e2e8f0',
+        backgroundColor: '#f8fafc',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        width: '12%'
+    },
+
+    tableHeaderEmployeeId: {
+        padding: '16px 12px',
+        textAlign: 'left',
+        fontSize: '0.8rem',
+        fontWeight: '700',
+        color: '#374151',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        borderRight: '1px solid #e2e8f0',
+        backgroundColor: '#f8fafc',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        width: '10%'
+    },
+
+    tableHeaderDepartment: {
+        padding: '16px 12px',
+        textAlign: 'left',
+        fontSize: '0.8rem',
+        fontWeight: '700',
+        color: '#374151',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        borderRight: '1px solid #e2e8f0',
+        backgroundColor: '#f8fafc',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        width: '12%'
+    },
+
+    tableHeaderStatus: {
+        padding: '16px 12px',
+        textAlign: 'left',
+        fontSize: '0.8rem',
+        fontWeight: '700',
+        color: '#374151',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        borderRight: '1px solid #e2e8f0',
+        backgroundColor: '#f8fafc',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        width: '8%'
+    },
+
+    tableHeaderLastLogin: {
+        padding: '16px 12px',
+        textAlign: 'left',
+        fontSize: '0.8rem',
+        fontWeight: '700',
+        color: '#374151',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        borderRight: '1px solid #e2e8f0',
+        backgroundColor: '#f8fafc',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        width: '13%'
+    },
+
+    tableHeaderActions: {
+        padding: '16px 12px',
+        textAlign: 'left',
+        fontSize: '0.8rem',
+        fontWeight: '700',
+        color: '#374151',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        backgroundColor: '#f8fafc',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        width: '10%'
     },
 
     tableRow: {
@@ -816,13 +1303,106 @@ const usersStyles = {
         transition: 'background-color 0.2s ease'
     },
 
-    tableCell: {
+    // Updated column-specific cell styles with proper widths and overflow handling
+    tableCellName: {
         padding: '12px',
         verticalAlign: 'middle',
         fontSize: '0.9rem',
         color: '#374151',
         borderBottom: '1px solid #f1f5f9',
-        borderRight: '1px solid #f1f5f9'
+        borderRight: '1px solid #f1f5f9',
+        width: '15%',
+        wordBreak: 'break-word',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+    },
+
+    tableCellEmail: {
+        padding: '8px',
+        verticalAlign: 'middle',
+        borderBottom: '1px solid #f1f5f9',
+        borderRight: '1px solid #f1f5f9',
+        width: '20%'
+    },
+
+    emailContainer: {
+        width: '100%',
+        maxWidth: '200px',
+        overflow: 'hidden'
+    },
+
+    emailText: {
+        display: 'block',
+        fontSize: '0.85rem',
+        color: '#374151',
+        wordBreak: 'break-all',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        maxWidth: '100%',
+        cursor: 'help'
+    },
+
+    tableCellRole: {
+        padding: '12px',
+        verticalAlign: 'middle',
+        fontSize: '0.9rem',
+        color: '#374151',
+        borderBottom: '1px solid #f1f5f9',
+        borderRight: '1px solid #f1f5f9',
+        width: '12%'
+    },
+
+    tableCellEmployeeId: {
+        padding: '12px',
+        verticalAlign: 'middle',
+        fontSize: '0.9rem',
+        color: '#374151',
+        borderBottom: '1px solid #f1f5f9',
+        borderRight: '1px solid #f1f5f9',
+        width: '10%',
+        wordBreak: 'break-word'
+    },
+
+    tableCellDepartment: {
+        padding: '12px',
+        verticalAlign: 'middle',
+        fontSize: '0.9rem',
+        color: '#374151',
+        borderBottom: '1px solid #f1f5f9',
+        borderRight: '1px solid #f1f5f9',
+        width: '12%',
+        wordBreak: 'break-word'
+    },
+
+    tableCellStatus: {
+        padding: '12px',
+        verticalAlign: 'middle',
+        fontSize: '0.9rem',
+        color: '#374151',
+        borderBottom: '1px solid #f1f5f9',
+        borderRight: '1px solid #f1f5f9',
+        width: '8%'
+    },
+
+    tableCellLastLogin: {
+        padding: '12px',
+        verticalAlign: 'middle',
+        fontSize: '0.85rem',
+        color: '#374151',
+        borderBottom: '1px solid #f1f5f9',
+        borderRight: '1px solid #f1f5f9',
+        width: '13%',
+        wordBreak: 'break-word'
+    },
+
+    tableCellActions: {
+        padding: '12px',
+        verticalAlign: 'middle',
+        fontSize: '0.9rem',
+        color: '#374151',
+        borderBottom: '1px solid #f1f5f9',
+        width: '10%'
     },
 
     // Role and Status Badges
@@ -1117,10 +1697,211 @@ const usersStyles = {
         background: 'white',
         color: '#374151',
         fontWeight: '500'
+    },
+
+    // ADD USER MODAL STYLES - Unique to users page
+    modalOverlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10000,
+        padding: '20px',
+        backdropFilter: 'blur(4px)'
+    },
+
+    modalContainer: {
+        background: 'white',
+        borderRadius: '16px',
+        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
+        width: '100%',
+        maxWidth: '600px',
+        maxHeight: '90vh',
+        overflow: 'hidden',
+        position: 'relative'
+    },
+
+    modalHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '24px 24px 0 24px',
+        borderBottom: '1px solid #e2e8f0',
+        paddingBottom: '20px',
+        marginBottom: '24px'
+    },
+
+    modalTitle: {
+        fontSize: '1.5rem',
+        fontWeight: '700',
+        color: '#1f2937',
+        margin: 0
+    },
+
+    modalCloseButton: {
+        background: 'none',
+        border: 'none',
+        fontSize: '1.5rem',
+        color: '#6b7280',
+        cursor: 'pointer',
+        padding: '8px',
+        borderRadius: '8px',
+        transition: 'all 0.2s ease',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+
+    modalForm: {
+        padding: '0 24px 24px 24px',
+        maxHeight: 'calc(90vh - 140px)',
+        overflowY: 'auto'
+    },
+
+    modalFormGrid: {
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '20px',
+        marginBottom: '24px'
+    },
+
+    modalFormGroup: {
+        display: 'flex',
+        flexDirection: 'column'
+    },
+
+    modalFormGroupFull: {
+        display: 'flex',
+        flexDirection: 'column',
+        gridColumn: '1 / -1'
+    },
+
+    modalLabel: {
+        fontSize: '0.9rem',
+        fontWeight: '600',
+        color: '#374151',
+        marginBottom: '8px'
+    },
+
+    modalInput: {
+        padding: '12px 16px',
+        border: '2px solid #e2e8f0',
+        borderRadius: '8px',
+        fontSize: '1rem',
+        transition: 'all 0.2s ease',
+        background: '#f8fafc'
+    },
+
+    modalInputError: {
+        borderColor: '#ef4444',
+        background: '#fef2f2'
+    },
+
+    modalSelect: {
+        padding: '12px 16px',
+        border: '2px solid #e2e8f0',
+        borderRadius: '8px',
+        fontSize: '1rem',
+        transition: 'all 0.2s ease',
+        background: '#f8fafc',
+        cursor: 'pointer'
+    },
+
+    modalPasswordWrapper: {
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center'
+    },
+
+    modalPasswordInput: {
+        padding: '12px 50px 12px 16px',
+        border: '2px solid #e2e8f0',
+        borderRadius: '8px',
+        fontSize: '1rem',
+        transition: 'all 0.2s ease',
+        background: '#f8fafc',
+        width: '100%'
+    },
+
+    modalPasswordToggle: {
+        position: 'absolute',
+        right: '12px',
+        background: 'none',
+        border: 'none',
+        color: '#6b7280',
+        cursor: 'pointer',
+        padding: '4px',
+        borderRadius: '4px',
+        transition: 'all 0.2s ease',
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: '1.2rem'
+    },
+
+    modalErrorText: {
+        color: '#dc2626',
+        fontSize: '0.8rem',
+        marginTop: '4px',
+        fontWeight: '500'
+    },
+
+    modalActions: {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: '12px',
+        paddingTop: '20px',
+        borderTop: '1px solid #e2e8f0'
+    },
+
+    modalCancelButton: {
+        padding: '12px 24px',
+        background: '#f1f5f9',
+        color: '#374151',
+        border: '1px solid #d1d5db',
+        borderRadius: '8px',
+        fontSize: '1rem',
+        fontWeight: '500',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease'
+    },
+
+    modalSubmitButton: {
+        padding: '12px 24px',
+        background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        fontSize: '1rem',
+        fontWeight: '600',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+    },
+
+    modalSubmitButtonDisabled: {
+        opacity: 0.7,
+        cursor: 'not-allowed'
+    },
+
+    modalSubmitSpinner: {
+        width: '16px',
+        height: '16px',
+        border: '2px solid rgba(255, 255, 255, 0.3)',
+        borderTop: '2px solid white',
+        borderRadius: '50%',
+        animation: 'usersSpinAnimation 1s linear infinite'
     }
 };
 
-// CSS Animations as a string - unique to users page
+// CSS Animations as a string - unique to users page with modal support
 const usersPageCSS = `
   /* Unique animations for users page */
   @keyframes usersSpinAnimation {
@@ -1174,9 +1955,72 @@ const usersPageCSS = `
     background: linear-gradient(135deg, #2563eb, #1e40af);
   }
   
+  /* Modal scrollbar styles */
+  .users-page-wrapper .modalForm::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .users-page-wrapper .modalForm::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+  
+  .users-page-wrapper .modalForm::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-radius: 3px;
+  }
+  
+  /* Enhanced email handling for users page only */
+  .users-page-wrapper .emailContainer:hover .emailText {
+    white-space: normal;
+    word-break: break-all;
+    overflow: visible;
+    text-overflow: unset;
+    background: #f8fafc;
+    padding: 4px 8px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
+    z-index: 100;
+    max-width: none;
+    width: max-content;
+    max-width: 300px;
+  }
+  
+  /* Modal focus styles for users page */
+  .users-page-wrapper .modalInput:focus,
+  .users-page-wrapper .modalSelect:focus,
+  .users-page-wrapper .modalPasswordInput:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: white;
+  }
+  
   /* Hover effects for users page only */
   .users-page-wrapper button:hover:not(:disabled) {
     transform: translateY(-1px);
+  }
+  
+  .users-page-wrapper .modalCloseButton:hover {
+    background: #f3f4f6;
+    color: #374151;
+  }
+  
+  .users-page-wrapper .modalPasswordToggle:hover {
+    background: #f3f4f6;
+    color: #374151;
+  }
+  
+  .users-page-wrapper .modalCancelButton:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+  }
+  
+  .users-page-wrapper .modalSubmitButton:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
   }
   
   .users-page-wrapper .tableRow:hover {
@@ -1215,6 +2059,29 @@ const usersPageCSS = `
     box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
   }
   
+  /* Email tooltip enhancement for users page only */
+  .users-page-wrapper .emailText {
+    position: relative;
+  }
+  
+  .users-page-wrapper .emailText:hover::after {
+    content: attr(title);
+    position: absolute;
+    top: -30px;
+    left: 0;
+    background: #1f2937;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    max-width: 250px;
+    word-break: break-all;
+    white-space: normal;
+  }
+  
   /* Responsive styles for users page only */
   @media (max-width: 768px) {
     .users-page-wrapper .usersContent {
@@ -1246,6 +2113,23 @@ const usersPageCSS = `
       width: 100%;
       max-width: unset;
     }
+    
+    .users-page-wrapper .emailContainer {
+      max-width: 120px;
+    }
+    
+    .users-page-wrapper .emailText {
+      font-size: 0.8rem;
+    }
+    
+    .users-page-wrapper .modalFormGrid {
+      grid-template-columns: 1fr;
+    }
+    
+    .users-page-wrapper .modalContainer {
+      margin: 10px;
+      max-width: calc(100vw - 20px);
+    }
   }
 
   @media (max-width: 480px) {
@@ -1267,15 +2151,26 @@ const usersPageCSS = `
       height: 28px;
       font-size: 0.9rem;
     }
+    
+    .users-page-wrapper .emailContainer {
+      max-width: 100px;
+    }
+    
+    .users-page-wrapper .emailText {
+      font-size: 0.75rem;
+    }
+    
+    .users-page-wrapper .modalActions {
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .users-page-wrapper .modalCancelButton,
+    .users-page-wrapper .modalSubmitButton {
+      width: 100%;
+      justify-content: center;
+    }
   }
 `;
-
-// Only add stylesheet if it doesn't exist
-const usersStyleSheet = document.createElement('style');
-if (!document.querySelector('#users-page-styles')) {
-    usersStyleSheet.id = 'users-page-styles';
-    usersStyleSheet.innerHTML = usersPageCSS;
-    document.head.appendChild(usersStyleSheet);
-}
 
 export default UsersPage;

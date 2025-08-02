@@ -111,6 +111,18 @@ const componentSchema = new mongoose.Schema({
     default: 0,
     min: [0, 'Total outward cannot be negative']
   },
+  barcode: {
+    type: String,
+    trim: true,
+    index: true // Add index for faster queries
+  },
+  partNumber: {
+    type: String,
+    required: [true, 'Part number is required'],
+    trim: true,
+    unique: true, // This is causing the duplicate error
+    index: true
+  },
   addedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
