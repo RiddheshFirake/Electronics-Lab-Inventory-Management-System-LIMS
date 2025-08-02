@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MdAdd, 
   MdBarcodeReader, 
@@ -16,13 +16,11 @@ import {
   MdWarning,
   MdUpdate
 } from 'react-icons/md';
+import BarcodeReader from 'react-barcode-reader';
 import api from '../utils/api';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import './ScanPage.css';
-
-// Install this library: npm install quagga
-import Quagga from 'quagga';
 
 const ScanPage = () => {
   const [scanResult, setScanResult] = useState(null);
@@ -38,8 +36,6 @@ const ScanPage = () => {
   const [existingComponent, setExistingComponent] = useState(null); // For duplicate handling
   const [updateMode, setUpdateMode] = useState('add'); // 'add' or 'replace'
   const [cameraPermission, setCameraPermission] = useState('unknown'); // 'unknown', 'granted', 'denied'
-  const scannerRef = useRef(null);
-  const videoRef = useRef(null);
 
   // Fetch predefined categories on load for the form
   useEffect(() => {
@@ -84,15 +80,6 @@ const ScanPage = () => {
     }
   }, [notification]);
 
-  // Clean up scanner when component unmounts or status changes
-  useEffect(() => {
-    return () => {
-      if (status !== 'scanning') {
-        stopScanner();
-      }
-    };
-  }, [status]);
-
   const showNotification = (message, type, componentData = null) => {
     console.log(`Notification (${type}): ${message}`);
     setNotification({ message, type });
@@ -130,104 +117,36 @@ const ScanPage = () => {
     }
   };
 
-  const initializeScanner = () => {
-    if (scannerRef.current) {
-      Quagga.init({
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: scannerRef.current,
-          constraints: {
-            width: 640,
-            height: 480,
-            facingMode: "environment"
-          }
-        },
-        locator: {
-          patchSize: "medium",
-          halfSample: true
-        },
-        numOfWorkers: 2,
-        frequency: 10,
-        decoder: {
-          readers: [
-            "code_128_reader",
-            "ean_reader",
-            "ean_8_reader",
-            "code_39_reader",
-            "code_39_vin_reader",
-            "codabar_reader",
-            "upc_reader",
-            "upc_e_reader"
-          ]
-        },
-        locate: true
-      }, (err) => {
-        if (err) {
-          console.error('Scanner initialization failed:', err);
-          handleScannerError(err);
-          return;
-        }
-        console.log("Scanner initialized successfully");
-        Quagga.start();
-        setCameraPermission('granted');
-        
-        // Listen for scan results
-        Quagga.onDetected((result) => {
-          const code = result.codeResult.code;
-          console.log('Barcode detected:', code);
-          handleScan(code);
-        });
-      });
-    }
-  };
-
-  const stopScanner = () => {
+  // Simplified camera permission check - don't request stream here
+  const checkCameraAccess = async () => {
     try {
-      Quagga.stop();
-      Quagga.offDetected();
+      // Just check if getUserMedia is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera not supported in this browser');
+      }
+      return true;
     } catch (err) {
-      console.log('Error stopping scanner:', err);
+      console.error('Camera check failed:', err);
+      setError('Camera not supported in this browser. Please use Chrome, Firefox, or Safari.');
+      return false;
     }
   };
 
   const handleStartScan = async () => {
     if (scanMode === 'camera') {
-      setStatus('scanning');
-      setError(null);
-      
-      // Small delay to ensure DOM is ready
-      setTimeout(() => {
-        initializeScanner();
-      }, 100);
+      const hasCamera = await checkCameraAccess();
+      if (hasCamera) {
+        setStatus('scanning');
+        setError(null);
+      } else {
+        setStatus('error');
+      }
     }
-  };
-
-  const handleScannerError = (err) => {
-    console.error('Scanner error:', err);
-    
-    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      setError('Camera permission denied. Please allow camera access in your browser settings and refresh the page.');
-      setCameraPermission('denied');
-    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-      setError('No camera found. Please make sure your device has a camera.');
-    } else if (err.name === 'NotSupportedError') {
-      setError('Camera not supported in this browser. Try using Chrome or Firefox.');
-    } else if (err.name === 'NotReadableError') {
-      setError('Camera is already in use by another application. Please close other apps using the camera.');
-    } else {
-      setError('Camera error: ' + (err.message || 'Unknown error') + '. Please try refreshing the page.');
-    }
-    
-    setStatus('error');
   };
 
   const handleScan = async (barcode) => {
-    if (status !== 'scanning') return;
+    if (status !== 'scanning' && status !== 'initial') return;
 
-    // Stop scanner to prevent multiple scans
-    stopScanner();
-    
     setStatus('loading');
     setScanResult(barcode);
     setError(null);
@@ -269,6 +188,25 @@ const ScanPage = () => {
       setError(err.response?.data?.message || 'Failed to fetch product details.');
       setStatus('error');
     }
+  };
+
+  const handleError = (err) => {
+    console.error('Scanner error:', err);
+    
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      setError('Camera permission denied. Please allow camera access in your browser settings and refresh the page.');
+      setCameraPermission('denied');
+    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      setError('No camera found. Please make sure your device has a camera.');
+    } else if (err.name === 'NotSupportedError') {
+      setError('Camera not supported in this browser. Try using Chrome or Firefox.');
+    } else if (err.name === 'NotReadableError') {
+      setError('Camera is already in use by another application. Please close other apps using the camera.');
+    } else {
+      setError('Camera error: ' + (err.message || 'Unknown error') + '. Please try refreshing the page.');
+    }
+    
+    setStatus('error');
   };
   
   const handleManualSubmit = (e) => {
@@ -368,7 +306,6 @@ const ScanPage = () => {
   };
 
   const handleReset = () => {
-    stopScanner();
     setScanResult(null);
     setFormData(null);
     setStatus('initial');
@@ -462,14 +399,18 @@ const ScanPage = () => {
         return (
           <div className="scanner-container">
             <div className="scanner-video-wrapper">
-              <div 
-                ref={scannerRef} 
-                className="scanner-element"
-                style={{
-                  width: '100%',
-                  height: '400px',
-                  position: 'relative'
+              <BarcodeReader
+                onScan={handleScan}
+                onError={handleError}
+                style={{ 
+                  width: '100%', 
+                  height: '100%',
+                  objectFit: 'cover'
                 }}
+                delay={300}
+                facingMode="environment"
+                resolution={600}
+                showViewFinder={true}
               />
               <div className="scanner-overlay">
                 <div className="scanner-line"></div>
@@ -498,7 +439,6 @@ const ScanPage = () => {
           </div>
         );
         
-      // ... rest of the cases remain the same as in your original code
       case 'loading':
         return (
           <div className="status-message">
