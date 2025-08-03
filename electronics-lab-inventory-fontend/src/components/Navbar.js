@@ -12,10 +12,11 @@ import {
   MdLightMode,
   MdKeyboardArrowRight,
   MdHelp,
-  MdFeedback
+  MdFeedback,
+  MdMenu // Add hamburger menu icon
 } from 'react-icons/md';
 
-const Navbar = ({ notificationCount = 0, onSearch }) => {
+const Navbar = ({ notificationCount = 0, onSearch, isMobileOpen, setIsMobileOpen }) => {
   const { user, logout } = useContext(AuthContext);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -101,6 +102,12 @@ const Navbar = ({ notificationCount = 0, onSearch }) => {
     // You can implement dark mode logic here
   };
 
+  const toggleMobileSidebar = () => {
+    if (setIsMobileOpen) {
+      setIsMobileOpen(!isMobileOpen);
+    }
+  };
+
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'warning': return '⚠️';
@@ -117,9 +124,19 @@ const Navbar = ({ notificationCount = 0, onSearch }) => {
   return (
     <>
       <div className="navbar-enhanced">
-        {/* Left Section - Search */}
+        {/* Left Section - Mobile Hamburger + Search */}
         <div className="navbar-left">
-          <div className="search-container">
+          {/* Mobile Hamburger Menu */}
+          <button 
+            className="mobile-hamburger"
+            onClick={toggleMobileSidebar}
+            aria-label="Toggle mobile menu"
+          >
+            <MdMenu />
+          </button>
+
+          {/* Search Container - Hidden on Mobile */}
+          <div className="search-container desktop-only">
             <MdSearch className="search-icon" />
             <input 
               ref={searchRef}
@@ -143,8 +160,8 @@ const Navbar = ({ notificationCount = 0, onSearch }) => {
 
         {/* Right Section - Actions & Profile */}
         <div className="navbar-right">
-          {/* Dark Mode Toggle */}
-          <div className="action-container">
+          {/* Dark Mode Toggle - Hidden on Mobile */}
+          <div className="action-container desktop-only">
             <button 
               className="action-btn"
               onClick={toggleDarkMode}
@@ -227,12 +244,12 @@ const Navbar = ({ notificationCount = 0, onSearch }) => {
                 )}
                 <div className="online-indicator"></div>
               </div>
-              <div className="user-info">
+              <div className="user-info desktop-only">
                 <span className="user-name">{userName}</span>
                 <span className="user-role">{userRole}</span>
               </div>
               <MdArrowDropDown 
-                className={`dropdown-arrow ${isDropdownOpen ? 'rotated' : ''}`} 
+                className={`dropdown-arrow desktop-only ${isDropdownOpen ? 'rotated' : ''}`} 
               />
             </button>
 
@@ -296,7 +313,7 @@ const Navbar = ({ notificationCount = 0, onSearch }) => {
         </div>
       </div>
 
-      {/* Enhanced Inline CSS */}
+      {/* Enhanced Inline CSS with Mobile Responsiveness */}
       <style jsx>{`
         .navbar-enhanced {
           width: 100%;
@@ -314,12 +331,45 @@ const Navbar = ({ notificationCount = 0, onSearch }) => {
           backdrop-filter: blur(20px);
         }
 
+        /* Mobile Hamburger Menu */
+        .mobile-hamburger {
+          display: none;
+          width: 44px;
+          height: 44px;
+          border: none;
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          border-radius: 12px;
+          color: white;
+          cursor: pointer;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .mobile-hamburger:hover {
+          background: linear-gradient(135deg, #5a6fd8, #6c42a0);
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .mobile-hamburger:active {
+          transform: translateY(0);
+        }
+
+        /* Desktop Only Elements */
+        .desktop-only {
+          display: flex;
+        }
+
         /* Left Section */
         .navbar-left {
           flex: 1;
           min-width: 0;
           display: flex;
           align-items: center;
+          gap: 16px;
         }
 
         .search-container {
@@ -876,61 +926,25 @@ const Navbar = ({ notificationCount = 0, onSearch }) => {
           transform: translateX(4px);
         }
 
-        /* Responsive Design */
-        @media (max-width: 1024px) {
-          .search-container {
-            max-width: 300px;
-          }
-          
-          .notification-dropdown,
-          .dropdown-menu {
-            width: 280px;
-          }
-        }
-
+        /* Mobile Responsive Design */
         @media (max-width: 768px) {
           .navbar-enhanced {
             padding: 0 16px;
-            min-height: 64px;
+            min-height: 60px;
           }
 
-          .search-container {
-            max-width: 220px;
-            padding: 10px 14px;
+          /* Show mobile hamburger */
+          .mobile-hamburger {
+            display: flex !important;
           }
 
-          .user-info {
-            display: none;
-          }
-
-          .dropdown-menu {
-            width: 260px;
-          }
-          
-          .notification-dropdown {
-            width: 320px;
-            right: -60px;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .navbar-enhanced {
-            padding: 0 12px;
-            min-height: 56px;
-            gap: 8px;
+          /* Hide desktop elements */
+          .desktop-only {
+            display: none !important;
           }
 
           .navbar-right {
-            gap: 8px;
-          }
-
-          .search-container {
-            max-width: 160px;
-            padding: 8px 12px;
-          }
-
-          .search-input {
-            font-size: 0.9rem;
+            gap: 12px;
           }
 
           .user-avatar {
@@ -938,14 +952,76 @@ const Navbar = ({ notificationCount = 0, onSearch }) => {
             height: 36px;
           }
 
+          .user-initials {
+            font-size: 1rem;
+          }
+
+          .notification-icon {
+            font-size: 1.3rem;
+          }
+
+          .notification-badge {
+            width: 16px;
+            height: 16px;
+            font-size: 0.6rem;
+            padding: 2px 4px;
+          }
+
+          .notification-dropdown {
+            width: calc(100vw - 32px);
+            right: -16px;
+            left: 16px;
+          }
+
+          .dropdown-menu {
+            width: calc(100vw - 32px);
+            right: -16px;
+            left: 16px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .navbar-enhanced {
+            padding: 0 12px;
+            min-height: 56px;
+          }
+
+          .navbar-right {
+            gap: 8px;
+          }
+
+          .mobile-hamburger {
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+          }
+
+          .user-avatar {
+            width: 32px;
+            height: 32px;
+          }
+
+          .user-initials {
+            font-size: 0.9rem;
+          }
+
+          .notification-btn,
+          .action-btn {
+            padding: 8px;
+          }
+
+          .notification-dropdown,
           .dropdown-menu {
             width: calc(100vw - 24px);
             right: -12px;
+            left: 12px;
           }
-          
-          .notification-dropdown {
-            width: calc(100vw - 24px);
-            right: -12px;
+        }
+
+        /* Landscape orientation for mobile */
+        @media (max-width: 768px) and (orientation: landscape) {
+          .navbar-enhanced {
+            min-height: 52px;
           }
         }
       `}</style>
