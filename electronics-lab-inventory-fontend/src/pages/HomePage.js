@@ -745,129 +745,6 @@ ${JSON.stringify(smartInput, null, 2)}
 
           </div>
           
-            {/* Enhanced Notifications Section */}
-            <div className="dashboard-section notification-summary-card">
-              <div className="notification-header">
-                <h2 className="section-title">
-                  <div className="title-icon-container">
-                    <MdNotifications className="notification-title-icon" />
-                  </div>
-                  Notifications
-                </h2>
-                <div className="notification-actions">
-                  <button className="view-all-btn">View All</button>
-                  <button className="mark-read-btn">Mark All Read</button>
-                </div>
-              </div>
-
-              {/* Notification Stats Grid */}
-              <div className="notification-stats-grid">
-                <div className="stat-card total">
-                  <div className="stat-icon">
-                    <MdNotifications />
-                  </div>
-                  <div className="stat-content">
-                    <span className="stat-number">{notificationSummary?.total || 0}</span>
-                    <span className="stat-label">Total</span>
-                  </div>
-                </div>
-                
-                <div className="stat-card unread">
-                  <div className="stat-icon">
-                    <div className="unread-dot"></div>
-                  </div>
-                  <div className="stat-content">
-                    <span className="stat-number">{notificationSummary?.unread || 0}</span>
-                    <span className="stat-label">Unread</span>
-                  </div>
-                </div>
-                
-                <div className="stat-card action-required">
-                  <div className="stat-icon">
-                    <MdWarning />
-                  </div>
-                  <div className="stat-content">
-                    <span className="stat-number">{notificationSummary?.actionRequired || 0}</span>
-                    <span className="stat-label">Action Required</span>
-                  </div>
-                </div>
-                
-                <div className="stat-card critical">
-                  <div className="stat-icon">
-                    <MdErrorOutline />
-                  </div>
-                  <div className="stat-content">
-                    <span className="stat-number">{notificationSummary?.critical || 0}</span>
-                    <span className="stat-label">Critical</span>
-                  </div>
-                </div>
-                
-                <div className="stat-card high-priority">
-                  <div className="stat-icon">
-                    <MdErrorOutline />
-                  </div>
-                  <div className="stat-content">
-                    <span className="stat-number">{notificationSummary?.high || 0}</span>
-                    <span className="stat-label">High Priority</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Critical Notifications */}
-              {notificationSummary?.criticalNotifications?.length > 0 && (
-                <div className="critical-notifications-section">
-                  <div className="critical-header">
-                    <MdErrorOutline className="critical-icon" />
-                    <h3>Recent Critical Notifications</h3>
-                    <span className="critical-count">{notificationSummary.criticalNotifications.length}</span>
-                  </div>
-                  <div className="critical-notifications-list">
-                    {notificationSummary.criticalNotifications.slice(0, 3).map((notif, index) => (
-                      <div key={notif._id} className="critical-notification-item">
-                        <div className="critical-item-indicator"></div>
-                        <div className="critical-item-content">
-                          <div className="critical-item-header">
-                            <span className="critical-item-title">{notif.title}</span>
-                            <span className="critical-item-time">
-                              {notif.createdAt ? new Date(notif.createdAt).toLocaleDateString() : 'Recent'}
-                            </span>
-                          </div>
-                          <div className="critical-item-message">{notif.message}</div>
-                          {notif.relatedComponent && (
-                            <div className="critical-item-component">
-                              <span>Component: {notif.relatedComponent.partNumber}</span>
-                            </div>
-                          )}
-                        </div>
-                        <button className="critical-item-action">
-                          <MdArrowForward />
-                        </button>
-                      </div>
-                    ))}
-                    {notificationSummary.criticalNotifications.length > 3 && (
-                      <div className="view-more-critical">
-                        <button className="view-more-btn">
-                          View {notificationSummary.criticalNotifications.length - 3} more critical notifications
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* No Notifications State */}
-              {(!notificationSummary || notificationSummary.total === 0) && (
-                <div className="no-notifications">
-                  <div className="no-notifications-icon">
-                    <MdNotifications />
-                  </div>
-                  <div className="no-notifications-text">
-                    <h4>All caught up!</h4>
-                    <p>No new notifications at the moment.</p>
-                  </div>
-                </div>
-              )}
-            </div>
 
             {/* Enhanced Chart: Monthly Transactions */}
             <div className="dashboard-section monthly-stats-enhanced">
@@ -2990,7 +2867,7 @@ ${JSON.stringify(smartInput, null, 2)}
         border: 1.5px solid #e2e8f0;
         border-radius: 12px;
         box-shadow: 0 2px 9px #667eea17;
-        display: flex; flex-direction: column; padding: 20px; gap: 13px;
+        display: flex; flex-direction: column; padding: 20px; gap: 1px;
       }
 
       .stat-card.users .stat-card-title { color: #4651b4 }
@@ -3051,7 +2928,10 @@ ${JSON.stringify(smartInput, null, 2)}
       .cat-bar-value {
         font-size: 0.96em;
         color: #535e7c;
-        padding-left: 3px;
+        padding-left: 0px;
+        font-weight: 500;
+        flex-shrink: 0;
+
       }
       .no-data-message {
         font-size: 1.02em;
@@ -3097,7 +2977,7 @@ ${JSON.stringify(smartInput, null, 2)}
                 <div className="smart-assessment-modal-body">
                   {assessing && (
                     <div className="assessment-loader">
-                      <span className="dot-anim">• • •</span> Analyzing your inventory with Gemini AI...
+                      <span className="dot-anim">• • •</span> Analyzing your inventory with AI...
                     </div>
                   )}
                   {!assessing && assessmentError && (
