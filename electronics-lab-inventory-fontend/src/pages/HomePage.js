@@ -240,9 +240,7 @@ ${JSON.stringify(smartInput, null, 2)}
   if (error) {
     return (
       <div className="dashboard-root">
-        <Sidebar />
         <div className="dashboard-main-area">
-          <Navbar />
           <div className="homepage-error">{error}</div>
         </div>
         <DashboardCSS />

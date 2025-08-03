@@ -907,11 +907,22 @@ const InventoryPage = () => {
                                     </div>
                                     
                                     {/* Scroll indicator */}
-                                    {components.length > 8 && (
-                                        <div style={inventoryStyles.scrollIndicator}>
-                                            <span>↑ Scroll to see more components ↓</span>
+                                    {/* Horizontal Scroll Indicator for Mobile */}
+                                    {components.length > 0 && (
+                                        <div style={{
+                                            ...inventoryStyles.scrollIndicator,
+                                            display: 'block',
+                                            textAlign: 'center',
+                                            padding: '8px',
+                                            backgroundColor: '#f8fafc',
+                                            color: '#6b7280',
+                                            fontSize: '0.8rem',
+                                            borderTop: '1px solid #e2e8f0'
+                                        }}>
+                                            <span>← Scroll horizontally to see all columns →</span>
                                         </div>
                                     )}
+
                                 </div>
 
                                 {/* Enhanced Pagination */}
@@ -1040,12 +1051,14 @@ const inventoryStyles = {
     appContainer: {
         display: 'flex',
         height: '100vh',
-        width: '100vw',
+        width: '100%', // Fixed from 100vw
+        maxWidth: '100%', // Add this
         overflow: 'hidden',
         margin: 0,
         padding: 0,
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#f8fafc',
+        boxSizing: 'border-box' // Add this
     },
 
     // Sticky Sidebar Container
@@ -1062,14 +1075,17 @@ const inventoryStyles = {
         borderRight: '1px solid #e2e8f0'
     },
 
-    // Main Content Area
+    // Main Content Area - Fixed width issues
     mainContentArea: {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        minWidth: 0,
+        minWidth: 0, // Important for preventing overflow
+        width: '100%',
+        maxWidth: '100%', // Add this
         height: '100vh',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        boxSizing: 'border-box'
     },
 
     // Sticky Navbar Container  
@@ -1085,17 +1101,18 @@ const inventoryStyles = {
         boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)'
     },
 
-    // Scrollable Inventory Content
+    // Scrollable Inventory Content - Fixed overflow
     inventoryContent: {
         flex: 1,
         padding: '24px',
         background: '#f8fafc',
         overflowY: 'auto',
-        overflowX: 'hidden',
+        overflowX: 'hidden', // Prevent horizontal scroll
         width: '100%',
+        maxWidth: '100%', // Add this
         minHeight: 0,
         scrollBehavior: 'smooth',
-        // Custom scrollbar for inventory content
+        boxSizing: 'border-box',
         scrollbarWidth: 'thin',
         scrollbarColor: '#cbd5e1 #f1f5f9'
     },
@@ -1114,7 +1131,7 @@ const inventoryStyles = {
         wordWrap: 'break-word'
     },
 
-    // Header styles - unique variables
+    // Header styles - Fixed responsive issues
     pageHeader: {
         display: 'flex',
         justifyContent: 'space-between',
@@ -1124,7 +1141,12 @@ const inventoryStyles = {
         padding: '28px',
         borderRadius: '16px',
         boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
-        border: '1px solid #e2e8f0'
+        border: '1px solid #e2e8f0',
+        width: '100%',
+        maxWidth: '100%', // Add this
+        boxSizing: 'border-box',
+        flexWrap: 'wrap', // Allow wrapping on mobile
+        gap: '16px' // Add gap for wrapped items
     },
 
     headerLeft: {
@@ -1167,7 +1189,9 @@ const inventoryStyles = {
 
     headerActions: {
         display: 'flex',
-        gap: '12px'
+        gap: '12px',
+        flexWrap: 'wrap', // Allow wrapping
+        minWidth: '0' // Prevent overflow
     },
 
     primaryButton: {
@@ -1220,17 +1244,22 @@ const inventoryStyles = {
         animation: 'inventorySpinAnimation 1s linear infinite'
     },
 
-    // Search and Filter Layout - unique variables
+    // Search and Filter Layout - Fixed responsive
     searchAndFilterSection: {
         display: 'flex',
         gap: '16px',
         marginBottom: '16px',
-        alignItems: 'center'
+        alignItems: 'center',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        flexWrap: 'wrap' // Allow wrapping on mobile
     },
 
     searchContainer: {
         position: 'relative',
         flex: 1,
+        minWidth: '200px', // Minimum width
         maxWidth: '600px',
         display: 'flex',
         alignItems: 'center',
@@ -1239,7 +1268,8 @@ const inventoryStyles = {
         borderRadius: '12px',
         padding: '14px 18px',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-        transition: 'all 0.3s ease'
+        transition: 'all 0.3s ease',
+        boxSizing: 'border-box'
     },
 
     searchIcon: {
@@ -1332,7 +1362,7 @@ const inventoryStyles = {
         fontSize: '1rem'
     },
 
-    // Filter section styles - unique variables
+    // Filter section styles
     filterSection: {
         background: 'white',
         borderRadius: '12px',
@@ -1437,7 +1467,7 @@ const inventoryStyles = {
         cursor: 'pointer'
     },
 
-    // Table Section - unique variables
+    // Table Section - MAJOR FIXES HERE
     tableSection: {
         background: 'white',
         borderRadius: '16px',
@@ -1445,6 +1475,7 @@ const inventoryStyles = {
         boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
         border: '1px solid #e2e8f0',
         width: '100%',
+        maxWidth: '100%', // Add this
         boxSizing: 'border-box',
         overflow: 'hidden',
         display: 'flex',
@@ -1454,6 +1485,7 @@ const inventoryStyles = {
 
     tableWrapper: {
         width: '100%',
+        maxWidth: '100%', // Add this
         position: 'relative',
         flex: 1,
         display: 'flex',
@@ -1461,43 +1493,50 @@ const inventoryStyles = {
         minHeight: 0,
         borderRadius: '12px',
         border: '1px solid #e2e8f0',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        boxSizing: 'border-box'
     },
 
     // Fixed Header Table Container
     tableContainer: {
         width: '100%',
-        overflowX: 'hidden',
+        maxWidth: '100%', // Add this
+        overflowX: 'auto', // Enable horizontal scroll for table
         overflowY: 'hidden',
         backgroundColor: 'white',
         flexShrink: 0,
-        borderBottom: '2px solid #e2e8f0'
+        borderBottom: '2px solid #e2e8f0',
+        boxSizing: 'border-box'
     },
 
-    // Header Table
+    // Header Table - FIXED WIDTH ISSUES
     table: {
         width: '100%',
+        minWidth: '1200px', // Minimum width to prevent cramping
         borderCollapse: 'collapse',
         background: 'white',
         tableLayout: 'fixed'
     },
 
-    // Scrollable Body Container
+    // Scrollable Body Container - FIXED OVERFLOW
     scrollableTableBody: {
         width: '100%',
+        maxWidth: '100%', // Add this
         overflowY: 'auto',
-        overflowX: 'hidden',
+        overflowX: 'auto', // Enable horizontal scroll
         backgroundColor: 'white',
         flex: 1,
         minHeight: '400px',
         maxHeight: '500px',
         scrollbarWidth: 'thin',
-        scrollbarColor: '#cbd5e1 #f1f5f9'
+        scrollbarColor: '#cbd5e1 #f1f5f9',
+        boxSizing: 'border-box'
     },
 
-    // Body Table (matches header widths)
+    // Body Table (matches header widths) - FIXED
     bodyTable: {
         width: '100%',
+        minWidth: '1200px', // Same as header table
         borderCollapse: 'collapse',
         background: 'white',
         tableLayout: 'fixed'
@@ -1511,7 +1550,7 @@ const inventoryStyles = {
         zIndex: 10
     },
 
-    // Enhanced Table Header
+    // Enhanced Table Header - FIXED WIDTHS
     tableHeader: {
         padding: '16px 12px',
         textAlign: 'left',
@@ -1530,7 +1569,8 @@ const inventoryStyles = {
         zIndex: 10,
         overflow: 'hidden',
         textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
+        boxSizing: 'border-box'
     },
 
     headerContent: {
@@ -1557,7 +1597,7 @@ const inventoryStyles = {
         borderLeft: '4px solid #ef4444'
     },
 
-    // Enhanced Table Cell
+    // Enhanced Table Cell - FIXED OVERFLOW
     tableCell: {
         padding: '12px',
         verticalAlign: 'middle',
@@ -1567,7 +1607,8 @@ const inventoryStyles = {
         borderRight: '1px solid #f1f5f9',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
+        boxSizing: 'border-box'
     },
 
     // Component Name Cell
@@ -1630,12 +1671,13 @@ const inventoryStyles = {
         minWidth: '60px'
     },
 
-    // Action Buttons
+    // Action Buttons - FIXED FOR MOBILE
     actionButtons: {
         display: 'flex',
         gap: '4px',
         justifyContent: 'center',
-        flexWrap: 'wrap'
+        flexWrap: 'nowrap', // Don't wrap action buttons
+        minWidth: '120px' // Ensure minimum width
     },
 
     actionButton: {
@@ -1849,9 +1891,21 @@ const inventoryStyles = {
     }
 };
 
+
 // Unique CSS animations and scrollbar styles for inventory page only
+// Updated CSS animations and scrollbar styles with mobile fixes
 const inventoryStyleSheet = document.createElement('style');
 inventoryStyleSheet.innerHTML = `
+  /* Prevent horizontal overflow globally */
+  * {
+    box-sizing: border-box;
+  }
+  
+  html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+  
   /* Unique animations for inventory page */
   @keyframes inventorySpinAnimation {
     0% { transform: rotate(0deg); }
@@ -1871,27 +1925,28 @@ inventoryStyleSheet.innerHTML = `
   
   /* Inventory page specific scrollbar styles */
   .inventory-page-wrapper .inventoryContent::-webkit-scrollbar {
-    width: 12px;
+    width: 8px;
+    height: 8px;
   }
   
   .inventory-page-wrapper .inventoryContent::-webkit-scrollbar-track {
     background: #f1f5f9;
-    border-radius: 6px;
+    border-radius: 4px;
   }
   
   .inventory-page-wrapper .inventoryContent::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg, #cbd5e1, #94a3b8);
-    border-radius: 6px;
-    border: 2px solid #f1f5f9;
+    border-radius: 4px;
   }
   
   .inventory-page-wrapper .inventoryContent::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(135deg, #94a3b8, #64748b);
   }
   
-  /* Table scrollbar styles */
+  /* Table scrollbar styles - IMPORTANT FIXES */
   .inventory-page-wrapper .scrollableTableBody::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
   }
   
   .inventory-page-wrapper .scrollableTableBody::-webkit-scrollbar-track {
@@ -1902,45 +1957,106 @@ inventoryStyleSheet.innerHTML = `
   .inventory-page-wrapper .scrollableTableBody::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg, #cbd5e1, #94a3b8);
     border-radius: 4px;
-    border: 1px solid #f1f5f9;
   }
   
-  .inventory-page-wrapper .scrollableTableBody::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #94a3b8, #64748b);
+  .inventory-page-wrapper .tableContainer::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
   
-  /* Hover effects for inventory page only */
-  .inventory-page-wrapper button:hover:not(:disabled) {
-    transform: translateY(-1px);
+  .inventory-page-wrapper .tableContainer::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
   }
   
-  .inventory-page-wrapper .searchContainer:focus-within {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12), 0 4px 20px rgba(0, 0, 0, 0.08);
-    transform: translateY(-1px);
+  .inventory-page-wrapper .tableContainer::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+    border-radius: 4px;
   }
   
-  /* Responsive styles for inventory page only */
+  /* Mobile Responsive Fixes */
   @media (max-width: 768px) {
     .inventory-page-wrapper .inventoryContent {
-      padding: 16px;
+      padding: 12px !important;
     }
     
-    .inventory-page-wrapper .sidebarContainer {
-      width: 240px;
+    .inventory-page-wrapper .pageHeader {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 16px !important;
+    }
+    
+    .inventory-page-wrapper .headerActions {
+      justify-content: stretch !important;
+    }
+    
+    .inventory-page-wrapper .searchAndFilterSection {
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+    
+    .inventory-page-wrapper .searchContainer {
+      max-width: none !important;
+    }
+    
+    .inventory-page-wrapper .filterButtonContainer {
+      justify-content: center !important;
+    }
+    
+    /* Table mobile fixes */
+    .inventory-page-wrapper .tableSection {
+      padding: 12px !important;
+      border-radius: 12px !important;
+    }
+    
+    .inventory-page-wrapper .table,
+    .inventory-page-wrapper .bodyTable {
+      min-width: 800px !important; /* Smaller minimum width for mobile */
+    }
+    
+    .inventory-page-wrapper .tableHeader {
+      padding: 12px 8px !important;
+      font-size: 0.7rem !important;
+    }
+    
+    .inventory-page-wrapper .tableCell {
+      padding: 10px 8px !important;
+      font-size: 0.8rem !important;
+    }
+    
+    .inventory-page-wrapper .actionButtons {
+      gap: 2px !important;
+    }
+    
+    .inventory-page-wrapper .actionButton {
+      width: 24px !important;
+      height: 24px !important;
+      font-size: 0.8rem !important;
     }
   }
   
   @media (max-width: 480px) {
     .inventory-page-wrapper .inventoryContent {
-      padding: 12px;
+      padding: 8px !important;
     }
     
-    .inventory-page-wrapper .sidebarContainer {
-      width: 220px;
+    .inventory-page-wrapper .pageHeader {
+      padding: 16px !important;
+    }
+    
+    .inventory-page-wrapper .table,
+    .inventory-page-wrapper .bodyTable {
+      min-width: 700px !important; /* Even smaller for very small screens */
     }
   }
+  
+  /* Ensure no elements cause horizontal overflow */
+  .inventory-page-wrapper * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
 `;
+
 
 // Only add stylesheet if it doesn't exist
 if (!document.querySelector('#inventory-page-styles')) {
