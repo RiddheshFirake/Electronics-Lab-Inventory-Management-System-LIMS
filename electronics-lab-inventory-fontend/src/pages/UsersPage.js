@@ -335,9 +335,9 @@ const UsersPage = () => {
 
     return (
         <div className="users-page-wrapper" style={usersStyles.appContainer}>
-            <div style={usersStyles.sidebarContainer}>
+            
                 <Sidebar />
-            </div>
+            
             <div style={usersStyles.mainContentArea}>
                 <div style={usersStyles.navbarContainer}>
                     <Navbar />

@@ -504,9 +504,9 @@ const InventoryPage = () => {
 
     return (
         <div className="inventory-page-wrapper" style={inventoryStyles.appContainer}>
-            <div style={inventoryStyles.sidebarContainer}>
-                <Sidebar />
-            </div>
+            
+            <Sidebar />
+            
             <div style={inventoryStyles.mainContentArea}>
                 <div style={inventoryStyles.navbarContainer}>
                     <Navbar />

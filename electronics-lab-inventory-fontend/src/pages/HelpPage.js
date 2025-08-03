@@ -149,9 +149,9 @@ const HelpPage = () => {
 
   return (
     <div className="help-page-wrapper">
-      <div className="help-sidebar-container">
+      
         <Sidebar />
-      </div>
+      
       <div className="help-main-content-area">
         <div className="help-navbar-container">
           <Navbar />

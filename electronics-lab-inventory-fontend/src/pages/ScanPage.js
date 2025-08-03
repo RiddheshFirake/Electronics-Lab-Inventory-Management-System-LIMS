@@ -819,9 +819,9 @@ const ScanPage = () => {
 
   return (
     <div className="scan-page-wrapper">
-      <div className="scan-sidebar-container">
+      
         <Sidebar />
-      </div>
+      
       <div className="scan-main-content-area">
         <div className="scan-navbar-container">
           <Navbar />

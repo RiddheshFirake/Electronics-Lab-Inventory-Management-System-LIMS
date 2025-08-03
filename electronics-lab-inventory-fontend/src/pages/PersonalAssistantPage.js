@@ -1,6 +1,6 @@
 // src/pages/PersonalAssistantPage.js
 import React, { useState, useRef, useContext, useEffect } from 'react';
-import { MdSend, MdPerson, MdSmartToy, MdRefresh, MdExpandMore, MdExpandLess, MdMic, MdStop } from 'react-icons/md';
+import { MdSend, MdPerson, MdSmartToy, MdRefresh, MdExpandMore, MdExpandLess, MdMic, MdStop, MdMenu, MdClose } from 'react-icons/md';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import AuthContext from '../contexts/AuthContext';
@@ -39,6 +39,7 @@ function PersonalAssistantPage() {
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const [typingIndicator, setTypingIndicator] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar state
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -85,7 +86,6 @@ function PersonalAssistantPage() {
 
     setLoading(true);
     
-    // Animated typing effect
     const typingTexts = ['Thinking...', 'Processing...', 'Analyzing...'];
     let index = 0;
     const typingInterval = setInterval(() => {
@@ -155,12 +155,41 @@ function PersonalAssistantPage() {
     return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase();
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
     <div className="personal-assistant-page-wrapper" style={assistantStyles.appContainer}>
-      <div style={assistantStyles.sidebarContainer}>
+      {/* Mobile Sidebar Overlay */}
+     
+      
+      {/* Sidebar */}
+
         <Sidebar />
-      </div>
+ 
+      
       <div style={assistantStyles.mainContentArea}>
+        {/* Mobile Header with Hamburger */}
+        <div style={assistantStyles.mobileHeader}>
+          <button 
+            style={assistantStyles.hamburgerButton}
+            onClick={toggleSidebar}
+          >
+            <MdMenu />
+          </button>
+          <div style={assistantStyles.mobileTitle}>
+            <MdSmartToy style={{ marginRight: '8px' }} />
+            Personal Assistant
+          </div>
+          <div style={assistantStyles.mobileUserInfo}>
+            <div style={assistantStyles.mobileUserAvatar}>
+              {getUserInitials()}
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Navbar */}
         <div style={assistantStyles.navbarContainer}>
           <Navbar />
         </div>
@@ -173,7 +202,7 @@ function PersonalAssistantPage() {
               <div style={assistantStyles.backgroundElement2}></div>
               <div style={assistantStyles.backgroundElement3}></div>
 
-              {/* Header */}
+              {/* Header - Hidden on Mobile */}
               <div style={assistantStyles.header}>
                 <div style={assistantStyles.headerContent}>
                   <div style={assistantStyles.assistantIcon}>
@@ -304,7 +333,7 @@ function PersonalAssistantPage() {
                       <input
                         ref={inputRef}
                         type="text"
-                        placeholder="Ask me anything about electronics, your account, or orders..."
+                        placeholder="Ask me anything about electronics..."
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         disabled={loading}
@@ -402,9 +431,9 @@ function PersonalAssistantPage() {
   );
 }
 
-// Unique styles object for personal assistant page only
+// Updated styles with mobile responsiveness
 const assistantStyles = {
-  // Main Layout Container - Unique to assistant page
+  // Main Layout Container
   appContainer: {
     display: 'flex',
     height: '100vh',
@@ -416,18 +445,87 @@ const assistantStyles = {
     backgroundColor: '#f8fafc'
   },
 
-  // Sticky Sidebar Container
+  // Sidebar Overlay for Mobile
+  sidebarOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 999,
+    display: 'none', // Will be overridden in CSS for mobile
+  },
+
+  // Sidebar Container
   sidebarContainer: {
-    position: 'sticky',
+    position: 'fixed',
     top: 0,
     left: 0,
     height: '100vh',
-    width: '260px',
+    width: '280px',
     flexShrink: 0,
     zIndex: 1000,
     backgroundColor: 'white',
     boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)',
-    borderRight: '1px solid #e2e8f0'
+    borderRight: '1px solid #e2e8f0',
+    transition: 'transform 0.3s ease-in-out'
+  },
+
+  // Mobile Header
+  mobileHeader: {
+    display: 'none', // Hidden on desktop
+    height: '60px',
+    backgroundColor: 'white',
+    borderBottom: '1px solid #e2e8f0',
+    padding: '0 16px',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 998
+  },
+
+  hamburgerButton: {
+    width: '40px',
+    height: '40px',
+    border: 'none',
+    background: 'linear-gradient(135deg, #8b5cf6, #a855f7)',
+    borderRadius: '8px',
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    fontSize: '20px',
+    transition: 'all 0.2s ease'
+  },
+
+  mobileTitle: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#374151',
+    display: 'flex',
+    alignItems: 'center'
+  },
+
+  mobileUserInfo: {
+    display: 'flex',
+    alignItems: 'center'
+  },
+
+  mobileUserAvatar: {
+    width: '32px',
+    height: '32px',
+    background: 'linear-gradient(135deg, #10b981, #059669)',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'white',
+    fontSize: '12px',
+    fontWeight: '600'
   },
 
   // Main Content Area
@@ -437,10 +535,12 @@ const assistantStyles = {
     flexDirection: 'column',
     minWidth: 0,
     height: '100vh',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    marginLeft: '0px', // Offset for sidebar on desktop
+    transition: 'margin-left 0.3s ease-in-out'
   },
 
-  // Sticky Navbar Container  
+  // Desktop Navbar Container  
   navbarContainer: {
     position: 'sticky',
     top: 0,
@@ -461,7 +561,6 @@ const assistantStyles = {
     width: '100%',
     minHeight: 0,
     scrollBehavior: 'smooth',
-    // Custom scrollbar for assistant content
     scrollbarWidth: 'thin',
     scrollbarColor: '#cbd5e1 #f1f5f9'
   },
@@ -829,7 +928,7 @@ const assistantStyles = {
   }
 };
 
-// CSS Animations as a string - unique to assistant page
+// Updated CSS with mobile responsiveness
 const personalAssistantCSS = `
   /* Unique animations for assistant page */
   @keyframes assistantPulse {
@@ -860,18 +959,17 @@ const personalAssistantCSS = `
   
   /* Assistant page specific scrollbar styles */
   .personal-assistant-page-wrapper .assistantContent::-webkit-scrollbar {
-    width: 12px;
+    width: 8px;
   }
   
   .personal-assistant-page-wrapper .assistantContent::-webkit-scrollbar-track {
     background: #f1f5f9;
-    border-radius: 6px;
+    border-radius: 4px;
   }
   
   .personal-assistant-page-wrapper .assistantContent::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg, #8b5cf6, #a855f7);
-    border-radius: 6px;
-    border: 2px solid #f1f5f9;
+    border-radius: 4px;
   }
   
   .personal-assistant-page-wrapper .assistantContent::-webkit-scrollbar-thumb:hover {
@@ -897,7 +995,7 @@ const personalAssistantCSS = `
     background: linear-gradient(135deg, #7c3aed, #9333ea);
   }
 
-  /* Markdown styles for message bubbles - scoped to assistant page */
+  /* Markdown styles for message bubbles */
   .personal-assistant-page-wrapper .message-bubble strong {
     font-weight: 700;
     color: inherit;
@@ -982,46 +1080,171 @@ const personalAssistantCSS = `
     font-weight: 600;
   }
 
-  /* Hover effects for assistant page only */
-  .personal-assistant-page-wrapper button:hover:not(:disabled) {
-    transform: translateY(-1px);
-  }
-
-  /* Responsive styles for assistant page only */
+  /* Mobile Responsive Styles */
   @media (max-width: 768px) {
-    .personal-assistant-page-wrapper .assistantContent {
-      padding: 16px;
+    /* Show mobile navigation */
+    .personal-assistant-page-wrapper .mobileHeader {
+      display: flex !important;
     }
     
+    /* Hide desktop navbar */
+    .personal-assistant-page-wrapper .navbarContainer {
+      display: none !important;
+    }
+    
+    /* Show sidebar overlay */
+    .personal-assistant-page-wrapper .sidebarOverlay {
+      display: block !important;
+    }
+    
+    /* Adjust main content area */
+    .personal-assistant-page-wrapper .mainContentArea {
+      margin-left: 0 !important;
+    }
+    
+    /* Mobile sidebar positioning */
     .personal-assistant-page-wrapper .sidebarContainer {
-      width: 240px;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 280px !important;
+      transform: translateX(-100%) !important;
+      transition: transform 0.3s ease-in-out !important;
+      z-index: 1000 !important;
     }
     
-    .personal-assistant-page-wrapper .message-bubble {
-      max-width: 85% !important;
+    /* Adjust page container padding */
+    .personal-assistant-page-wrapper .pageContainer {
+      padding: 12px !important;
     }
     
+    /* Adjust chat container */
     .personal-assistant-page-wrapper .chatContainer {
-      margin: 10px !important;
       border-radius: 16px !important;
+      max-width: 100% !important;
     }
     
+    /* Hide desktop header on mobile */
     .personal-assistant-page-wrapper .header {
-      padding: 20px 24px 16px !important;
+      display: none !important;
     }
     
+    /* Adjust chat area height */
+    .personal-assistant-page-wrapper .chatArea {
+      height: calc(100vh - 200px) !important;
+    }
+    
+    /* Adjust message bubbles */
+    .personal-assistant-page-wrapper .messageBubble {
+      max-width: 85% !important;
+      font-size: 14px !important;
+      padding: 12px 16px !important;
+    }
+    
+    /* Adjust input area */
     .personal-assistant-page-wrapper .inputArea {
       padding: 16px !important;
+    }
+    
+    .personal-assistant-page-wrapper .inputForm {
+      gap: 8px !important;
+      flex-wrap: wrap !important;
+    }
+    
+    .personal-assistant-page-wrapper .textInput {
+      padding: 14px 45px 14px 16px !important;
+      font-size: 16px !important; /* Prevent zoom on iOS */
+    }
+    
+    .personal-assistant-page-wrapper .sendButton,
+    .personal-assistant-page-wrapper .clearButton {
+      width: 44px !important;
+      height: 44px !important;
+      font-size: 18px !important;
+    }
+    
+    /* Adjust suggestions */
+    .personal-assistant-page-wrapper .suggestionsContainer {
+      padding: 0 16px 16px !important;
+    }
+    
+    .personal-assistant-page-wrapper .suggestionButton {
+      font-size: 12px !important;
+      padding: 6px 12px !important;
+    }
+    
+    /* Adjust avatars */
+    .personal-assistant-page-wrapper .avatar {
+      width: 32px !important;
+      height: 32px !important;
+      fontSize: 16px !important;
+    }
+    
+    .personal-assistant-page-wrapper .loadingAvatar {
+      width: 32px !important;
+      height: 32px !important;
+      fontSize: 16px !important;
+    }
+    
+    /* Messages container */
+    .personal-assistant-page-wrapper .messagesContainer {
+      padding: 16px !important;
+    }
+    
+    .personal-assistant-page-wrapper .messageWrapper {
+      gap: 8px !important;
+      margin-bottom: 16px !important;
     }
   }
 
   @media (max-width: 480px) {
-    .personal-assistant-page-wrapper .assistantContent {
-      padding: 12px;
+    /* Very small screens */
+    .personal-assistant-page-wrapper .sidebarContainer {
+      width: 100vw !important;
     }
     
-    .personal-assistant-page-wrapper .sidebarContainer {
-      width: 220px;
+    .personal-assistant-page-wrapper .pageContainer {
+      padding: 8px !important;
+    }
+    
+    .personal-assistant-page-wrapper .chatContainer {
+      border-radius: 12px !important;
+    }
+    
+    .personal-assistant-page-wrapper .inputForm {
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+    
+    .personal-assistant-page-wrapper .sendButton,
+    .personal-assistant-page-wrapper .clearButton {
+      width: 100% !important;
+      border-radius: 12px !important;
+      height: 48px !important;
+    }
+    
+    .personal-assistant-page-wrapper .textInput {
+      margin-bottom: 8px !important;
+    }
+    
+    .personal-assistant-page-wrapper .messageBubble {
+      max-width: 90% !important;
+    }
+    
+    .personal-assistant-page-wrapper .suggestionButton {
+      width: 100% !important;
+      text-align: center !important;
+    }
+  }
+
+  /* Landscape orientation adjustments */
+  @media (max-width: 768px) and (orientation: landscape) {
+    .personal-assistant-page-wrapper .chatArea {
+      height: calc(100vh - 160px) !important;
+    }
+    
+    .personal-assistant-page-wrapper .mobileHeader {
+      height: 50px !important;
     }
   }
 `;

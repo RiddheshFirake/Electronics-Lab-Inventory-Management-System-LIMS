@@ -14,7 +14,7 @@ import {
     MdAdminPanelSettings // Icon for Admin/Users link
 } from 'react-icons/md';
 
-import wareviewLogo from '../assets/wareview-logo.png';
+import wareviewLogo from '../assets/wareviewLogo.ico';
 import AuthContext from '../contexts/AuthContext'; // Import AuthContext
 
 const Sidebar = () => {
@@ -93,7 +93,7 @@ const Sidebar = () => {
                 <div className="sidebar-header">
                     <div className="logo-container">
                         {/* You can uncomment img src={wareviewLogo} if you have the image in assets */}
-                        {/* <img src={wareviewLogo} alt="WareView Logo" className="logo" /> */}
+                        <img src={wareviewLogo} alt="WareView Logo" className="logo" />
                         {!isCollapsed && <span className="logo-text">WareView</span>}
                     </div>
                     <button className="toggle-btn" onClick={toggleSidebar}>
@@ -194,7 +194,7 @@ const Sidebar = () => {
                 }
 
                 .sidebar.collapsed {
-                    width: 80px;
+                    width: 70px;
                 }
 
                 /* Header */
@@ -351,26 +351,58 @@ const Sidebar = () => {
                     opacity: 0.8;
                 }
 
-                /* Collapsed state styles */
+                /* Update the collapsed state styles */
                 .collapsed .nav-text,
                 .collapsed .nav-section-title,
-                .collapsed .version-info {
+                .collapsed .version-info,
+                .collapsed .user-role-display {
                     opacity: 0;
                     width: 0;
                     overflow: hidden;
-                    pointer-events: none; /* Disable interaction with hidden text */
-                    transition: opacity 0.1s ease, width 0.1s ease; /* Faster transition when collapsing */
+                    pointer-events: none;
+                    transition: opacity 0.1s ease, width 0.1s ease;
+                }
+
+                .collapsed .logo-text {
+                    opacity: 0;
+                    width: 0;
+                    overflow: hidden;
+                    transition: opacity 0.1s ease, width 0.1s ease;
                 }
 
                 .collapsed .nav-item {
                     justify-content: center;
-                    padding: 12px;
+                    padding: 12px 8px; /* Reduced horizontal padding */
+                    margin: 0 8px; /* Add margin to keep items centered */
+                }
+
+                .collapsed .nav-items {
+                    padding: 0 8px; /* Reduced padding for nav items container */
+                }
+
+                .collapsed .sidebar-header {
+                    padding: 24px 12px 20px 12px; /* Reduced horizontal padding */
+                    justify-content: center;
+                }
+
+                .collapsed .logo-container {
+                    justify-content: center;
                 }
 
                 .collapsed .active-indicator {
-                    right: 4px;
-                    height: 32px; /* Slightly taller indicator when collapsed */
+                    right: 2px; /* Moved closer to edge */
+                    height: 32px;
+                    width: 3px; /* Made slightly thinner */
                 }
+
+                .collapsed .sidebar-footer {
+                    padding: 16px 8px; /* Reduced horizontal padding */
+                }
+
+                /* Hide toggle button when collapsed to save space */
+                // .collapsed .toggle-btn {
+                //     display: none;
+                // }
 
                 /* Footer */
                 .sidebar-footer {
