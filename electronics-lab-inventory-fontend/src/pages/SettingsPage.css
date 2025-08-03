@@ -48,6 +48,7 @@
   border-radius: 20px;
   color: #6b7280;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .error-message {
@@ -61,6 +62,7 @@
   border-radius: 20px;
   font-weight: 500;
   box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1);
+  flex-shrink: 0;
 }
 
 .settings-sections {
@@ -78,6 +80,7 @@
   border: 1px solid #e2e8f0;
   transition: all 0.3s ease;
   height: fit-content;
+  min-height: auto;
 }
 
 .settings-card:hover {
@@ -447,6 +450,16 @@
   .settings-content {
     padding: 16px;
     gap: 20px;
+    height: calc(100vh - 70px); /* Adjusted for mobile navbar height */
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
   }
 
   .settings-header {
@@ -516,6 +529,7 @@
   .settings-content {
     padding: 12px;
     gap: 16px;
+    height: calc(100vh - 60px); /* Further adjusted for smaller screens */
   }
 
   .settings-header {
@@ -525,61 +539,8 @@
   .settings-header .page-title {
     font-size: 1.25rem;
   }
-
-  .card-header-settings {
-    padding: 12px 16px;
-  }
-
-  .card-title {
-    gap: 8px;
-  }
-
-  .card-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
-  }
-
-  .profile-display,
-  .settings-form,
-  .security-display,
-  .account-display {
-    padding: 12px 16px;
-  }
-
-  .profile-field,
-  .security-field,
-  .account-field {
-    padding: 10px;
-    gap: 6px;
-  }
-
-  .field-label {
-    font-size: 0.8rem;
-  }
-
-  .field-icon {
-    width: 20px;
-    height: 20px;
-    font-size: 0.7rem;
-  }
-
-  .role-badge,
-  .status-badge {
-    font-size: 0.7rem;
-    padding: 4px 8px;
-  }
-
-  .form-group input {
-    padding: 10px 12px;
-    font-size: 0.875rem;
-  }
-
-  .btn {
-    padding: 10px 16px;
-    font-size: 0.875rem;
-  }
 }
+
 
 /* Loading Animation */
 @keyframes spin {
@@ -606,7 +567,7 @@
 /* Compact notification */
 .app-notification {
   position: fixed;
-  top: 80px;
+  top: 100px; /* Adjusted to account for navbar */
   right: 20px;
   padding: 12px 20px;
   border-radius: 12px;
@@ -625,6 +586,12 @@
 
 .app-notification.error {
   background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
 }
 
 @keyframes slideInRight {
@@ -922,4 +889,35 @@
     transform: none;
   }
 }
+/* Custom Scrollbar */
+.settings-content::-webkit-scrollbar {
+  width: 6px;
+}
 
+.settings-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.settings-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+  border-radius: 3px;
+}
+
+.settings-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #94a3b8, #64748b);
+}
+
+/* Firefox */
+.settings-content {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.main-content-area {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 100vh;
+  overflow: hidden;
+}
