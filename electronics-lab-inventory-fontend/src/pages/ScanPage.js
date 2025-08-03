@@ -820,12 +820,9 @@ const ScanPage = () => {
   return (
     <div className="scan-page-wrapper">
       
-        <Sidebar />
       
       <div className="scan-main-content-area">
-        <div className="scan-navbar-container">
-          <Navbar />
-        </div>
+        
         
         {/* Enhanced Toast Notification */}
         {notification && (

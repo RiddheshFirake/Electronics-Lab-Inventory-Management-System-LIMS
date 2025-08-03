@@ -336,12 +336,9 @@ const UsersPage = () => {
     return (
         <div className="users-page-wrapper" style={usersStyles.appContainer}>
             
-                <Sidebar />
             
             <div style={usersStyles.mainContentArea}>
-                <div style={usersStyles.navbarContainer}>
-                    <Navbar />
-                </div>
+                
                 {notification && (
                     <div style={{
                         ...usersStyles.notification,

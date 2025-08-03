@@ -228,9 +228,7 @@ ${JSON.stringify(smartInput, null, 2)}
   if (loading) {
     return (
       <div className="dashboard-root">
-        <Sidebar />
         <div className="dashboard-main-area">
-          <Navbar />
           <div className="homepage-loading">Loading dashboard data...</div>
         </div>
         <DashboardCSS />
@@ -265,9 +263,7 @@ ${JSON.stringify(smartInput, null, 2)}
 
   return (
     <div className="dashboard-root">
-      <Sidebar />
       <div className="dashboard-main-area">
-        <Navbar />
         <main className="homepage-content">
           <div className="homepage-header user-header-flex">
             <div className="user-greeting-info">

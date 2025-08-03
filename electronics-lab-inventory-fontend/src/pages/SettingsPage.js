@@ -193,9 +193,9 @@ const SettingsPage = () => {
 
     return (
         <div className="app-container">
-            <Sidebar />
+            
             <div className="main-content-area">
-                <Navbar />
+                
                 {notification && (
                     <div className={`app-notification ${notification.type}`}>
                         {notification.message}

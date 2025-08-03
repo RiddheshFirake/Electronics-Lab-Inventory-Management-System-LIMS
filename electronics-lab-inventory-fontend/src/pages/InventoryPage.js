@@ -505,12 +505,8 @@ const InventoryPage = () => {
     return (
         <div className="inventory-page-wrapper" style={inventoryStyles.appContainer}>
             
-            <Sidebar />
             
             <div style={inventoryStyles.mainContentArea}>
-                <div style={inventoryStyles.navbarContainer}>
-                    <Navbar />
-                </div>
                 {notification && (
                     <div className={`app-notification ${notification.type}`} style={inventoryStyles.notification}>
                         {notification.message}

@@ -164,35 +164,12 @@ function PersonalAssistantPage() {
       {/* Mobile Sidebar Overlay */}
      
       
-      {/* Sidebar */}
-
-        <Sidebar />
+    
  
       
       <div style={assistantStyles.mainContentArea}>
         {/* Mobile Header with Hamburger */}
-        <div style={assistantStyles.mobileHeader}>
-          <button 
-            style={assistantStyles.hamburgerButton}
-            onClick={toggleSidebar}
-          >
-            <MdMenu />
-          </button>
-          <div style={assistantStyles.mobileTitle}>
-            <MdSmartToy style={{ marginRight: '8px' }} />
-            Personal Assistant
-          </div>
-          <div style={assistantStyles.mobileUserInfo}>
-            <div style={assistantStyles.mobileUserAvatar}>
-              {getUserInitials()}
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop Navbar */}
-        <div style={assistantStyles.navbarContainer}>
-          <Navbar />
-        </div>
+    
         
         <div style={assistantStyles.assistantContent}>
           <div style={assistantStyles.pageContainer}>

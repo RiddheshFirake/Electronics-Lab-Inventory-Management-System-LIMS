@@ -150,12 +150,9 @@ const HelpPage = () => {
   return (
     <div className="help-page-wrapper">
       
-        <Sidebar />
       
       <div className="help-main-content-area">
-        <div className="help-navbar-container">
-          <Navbar />
-        </div>
+        
         
         <div className="help-content">
           <div className="help-page-container">

@@ -98,9 +98,7 @@ const OrdersPage = () => {
 
   return (
     <div className="orders-root">
-      <Sidebar />
       <div className="orders-main">
-        <Navbar />
         <main className="orders-content">
           {/* Header Section */}
           <div className="orders-header">
