@@ -413,13 +413,15 @@ const assistantStyles = {
   // Main Layout Container
   appContainer: {
     display: 'flex',
-    height: '100vh',
-    width: '100vw',
-    overflow: 'hidden',
-    margin: 0,
-    padding: 0,
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    backgroundColor: '#f8fafc'
+        height: '100vh',
+        width: '100%', // Fixed from 100vw
+        maxWidth: '100%', // Add this
+        overflow: 'hidden',
+        margin: 0,
+        padding: 0,
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        backgroundColor: '#f8fafc',
+        boxSizing: 'border-box' // Add this
   },
 
   // Sidebar Overlay for Mobile

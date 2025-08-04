@@ -14,8 +14,7 @@ import {
   LineChart, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, Line, ResponsiveContainer,AreaChart,
   Area,
 } from 'recharts';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
+
 import DashboardCard from '../components/DashboardCard';
 import api from '../utils/api';
 
@@ -3074,11 +3073,16 @@ body, #root, .dashboard-root {
 }
 
 .dashboard-root {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  position: relative;
+  display: 'flex',
+        height: '100vh',
+        width: '100%', // Fixed from 100vw
+        maxWidth: '100%', // Add this
+        overflow: 'hidden',
+        margin: 0,
+        padding: 0,
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        backgroundColor: '#f8fafc',
+        boxSizing: 'border-box' // Add this
 }
 
 .dashboard-main-area {
@@ -3489,6 +3493,40 @@ body, #root, .dashboard-root {
 .homepage-content::-webkit-scrollbar-track { background: transparent; }
 .homepage-content::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px;}
 .homepage-content::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+/* ========== MOBILE RESPONSIVE FIXES ========== */
+@media (max-width: 900px) {
+  .user-header-flex {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: var(--spacing-md);
+  }
+  
+  .smart-assessment-btn {
+    margin-left: 0 !important;
+    margin-top: 15px;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .homepage-content {
+    padding: 12px !important;
+    overflow-x: hidden !important;
+  }
+  
+  .dashboard-grid {
+    gap: 12px !important;
+  }
+  
+  .dashboard-section {
+    padding: 16px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
   `}</style>
   );
 }
@@ -3517,21 +3555,23 @@ function SmartAssessmentCSS() {
   border-radius: 12px;
   display: inline-flex;
   align-items: center;
-  gap: 8px; /* Space between icon and text */
-  position: relative; /* For shimmer effect */
-  overflow: hidden; /* For shimmer effect */
-  margin-left: 20px; /* Using explicit px for clarity if --spacing-lg isn't defined globally */
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  margin-left: 20px;
+  flex-shrink: 0; /* Prevent shrinking */
 
-  /* Typography */
+   /* Typography */
   font-weight: 700;
   font-size: 1.1rem;
   letter-spacing: 0.02em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle text shadow */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  white-space: nowrap; /* Prevent text wrapping */
 
-  /* Interactivity & Transitions */
+   /* Interactivity & Transitions */
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transition */
-  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.25); /* Initial shadow */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.25);
 }
 
 /* Shimmer effect for button */

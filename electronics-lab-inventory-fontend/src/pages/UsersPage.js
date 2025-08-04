@@ -263,13 +263,9 @@ const UsersPage = () => {
     if (currentUser?.role !== 'Admin') {
         return (
             <div className="users-page-wrapper" style={usersStyles.appContainer}>
-                <div style={usersStyles.sidebarContainer}>
-                    <Sidebar />
-                </div>
+                
                 <div style={usersStyles.mainContentArea}>
-                    <div style={usersStyles.navbarContainer}>
-                        <Navbar />
-                    </div>
+                    
                     <div style={usersStyles.usersContent}>
                         <div style={usersStyles.accessDeniedState}>
                             <div style={usersStyles.noDataIllustration}>
@@ -292,13 +288,9 @@ const UsersPage = () => {
     if (loading && users.length === 0) {
         return (
             <div className="users-page-wrapper" style={usersStyles.appContainer}>
-                <div style={usersStyles.sidebarContainer}>
-                    <Sidebar />
-                </div>
+                
                 <div style={usersStyles.mainContentArea}>
-                    <div style={usersStyles.navbarContainer}>
-                        <Navbar />
-                    </div>
+                    
                     <div style={usersStyles.usersContent}>
                         <div style={usersStyles.loadingState}>
                             <div style={usersStyles.loadingSpinner}></div>
@@ -313,13 +305,9 @@ const UsersPage = () => {
     if (error && users.length === 0) {
         return (
             <div className="users-page-wrapper" style={usersStyles.appContainer}>
-                <div style={usersStyles.sidebarContainer}>
-                    <Sidebar />
-                </div>
+                
                 <div style={usersStyles.mainContentArea}>
-                    <div style={usersStyles.navbarContainer}>
-                        <Navbar />
-                    </div>
+                    
                     <div style={usersStyles.usersContent}>
                         <div style={usersStyles.errorState}>
                             <div style={usersStyles.errorMessage}>{error}</div>
@@ -857,27 +845,18 @@ const usersStyles = {
     appContainer: {
         display: 'flex',
         height: '100vh',
-        width: '100vw',
+        width: '100%', // Fixed from 100vw
+        maxWidth: '100%', // Add this
         overflow: 'hidden',
         margin: 0,
         padding: 0,
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#f8fafc',
+        boxSizing: 'border-box' // Add this
     },
 
     // Sticky Sidebar Container
-    sidebarContainer: {
-        position: 'sticky',
-        top: 0,
-        left: 0,
-        height: '100vh',
-        width: '260px',
-        flexShrink: 0,
-        zIndex: 1000,
-        backgroundColor: 'white',
-        boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)',
-        borderRight: '1px solid #e2e8f0'
-    },
+    
 
     // Main Content Area
     mainContentArea: {
